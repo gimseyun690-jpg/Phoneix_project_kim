@@ -1,0 +1,41 @@
+[
+  {
+    "id": 3,
+    "user_id": 2,
+    "site_id": 4,
+    "site_name": "문경 활공랜드",
+    "training_date": "2026-03-30",
+    "training_type": "계곡풍 판단 훈련",
+    "participated": true,
+    "flight_success": true,
+    "difficulty": "medium",
+    "memo": "정오 전 이륙 후 접근 패턴을 복습했습니다.",
+    "created_at": "2026-03-31T06:54:06.603543"
+  },
+  {
+    "id": 2,
+    "user_id": 2,
+    "site_id": 2,
+    "site_name": "단양 리지포인트",
+    "training_date": "2026-03-29",
+    "training_type": "리지 판단 브리핑",
+    "participated": true,
+    "flight_success": false,
+    "difficulty": "medium",
+    "memo": "오후 돌풍 증가로 실제 비행은 취소",
+    "created_at": "2026-03-31T06:54:06.603543"
+  },
+  {
+    "id": 1,
+    "user_id": 2,
+    "site_id": 1,
+    "site_name": "양평 패러밸리",
+    "training_date": "2026-03-24",
+    "training_type": "이륙 반복 훈련",
+    "participated": true,
+    "flight_success": true,
+    "difficulty": "easy",
+    "memo": "런업과 자세 교정 중심으로 진행",
+    "created_at": "2026-03-31T06:54:06.603543"
+  }
+]

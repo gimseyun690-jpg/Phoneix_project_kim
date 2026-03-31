@@ -1,0 +1,13 @@
+{
+  "site_id": 4,
+  "allowed_direction_start": 210,
+  "allowed_direction_end": 280,
+  "beginner_max_average_wind": 4.8,
+  "intermediate_max_average_wind": 6.4,
+  "advanced_max_average_wind": 7.8,
+  "max_gust": 8.8,
+  "max_gust_difference": 2.8,
+  "allow_precipitation": false,
+  "beginner_allowed": true,
+  "notes": "오전 비행 적합, 오후 계곡풍 증폭 주의"
+}

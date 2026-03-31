@@ -1,0 +1,80 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter run -d chrome -t lib/main.dart --dart-define=USE_MOCK_API=true
+
+## exception
+
+ShaderCompilerException: ShaderCompilerException: Shader compilation of "C:\Users\김세윤1\flutter\packages\flutter\lib\src\material\shaders\stretch_effect.frag" to "build\flutter_assets\shaders/stretch_effect.frag" failed with exit code -1073741819.
+impellerc stdout:
+
+impellerc stderr:
+
+
+
+
+```
+#0      ShaderCompiler.compileShader (package:flutter_tools/src/build_system/tools/shader_compiler.dart:196:9)
+<asynchronous suspension>
+#1      writeBundle.<anonymous closure> (package:flutter_tools/src/bundle_builder.dart:208:25)
+<asynchronous suspension>
+#2      Future.wait.<anonymous closure> (dart:async/future.dart:546:21)
+<asynchronous suspension>
+#3      writeBundle (package:flutter_tools/src/bundle_builder.dart:171:3)
+<asynchronous suspension>
+#4      WebDevFS.update (package:flutter_tools/src/isolated/devfs_web.dart:342:9)
+<asynchronous suspension>
+#5      ResidentWebRunner._updateDevFS (package:flutter_tools/src/isolated/resident_web_runner.dart:801:35)
+<asynchronous suspension>
+#6      ResidentWebRunner.run.<anonymous closure> (package:flutter_tools/src/isolated/resident_web_runner.dart:334:41)
+<asynchronous suspension>
+#7      asyncGuard.<anonymous closure> (package:flutter_tools/src/base/async_guard.dart:108:24)
+<asynchronous suspension>
+```
+
+## flutter doctor
+
+```
+[!] Flutter (Channel stable, 3.41.6, on Microsoft Windows [Version 10.0.26200.8037], locale ko-KR) [536ms]
+    • Flutter version 3.41.6 on channel stable at C:\Users\김세윤1\flutter
+    ! The flutter binary is not on your path. Consider adding C:\Users\김세윤1\flutter\bin to your path.
+    ! The dart binary is not on your path. Consider adding C:\Users\김세윤1\flutter\bin to your path.
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision db50e20168 (5 days ago), 2026-03-25 16:21:00 -0700
+    • Engine revision 425cfb54d0
+    • Dart version 3.11.4
+    • DevTools version 2.54.2
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+    • If those were intentional, you can disregard the above warnings; however it is recommended to use "git" directly to perform update checks and upgrades.
+
+[✓] Windows Version (11 Home 64-bit, 25H2, 2009) [1,987ms]
+
+[✗] Android toolchain - develop for Android devices [180ms]
+    ✗ Unable to locate Android SDK.
+      Install Android Studio from: https://developer.android.com/studio/index.html
+      On first launch it will assist you in installing the Android SDK components.
+      (or visit https://flutter.dev/to/windows-android-setup for detailed instructions).
+      If the Android SDK has been installed to a custom location, please use
+      `flutter config --android-sdk` to update to that location.
+
+
+[✓] Chrome - develop for the web [166ms]
+    • Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[✓] Visual Studio - develop Windows apps (Visual Studio Community 2026 18.4.2) [163ms]
+    • Visual Studio at C:\Program Files\Microsoft Visual Studio\18\Community
+    • Visual Studio Community 2026 version 18.4.11620.152
+    • Windows 10 SDK version 10.0.26100.0
+
+[✓] Connected device (3 available) [23ms]
+    • Windows (desktop) • windows • windows-x64    • Microsoft Windows [Version 10.0.26200.8037]
+    • Chrome (web)      • chrome  • web-javascript • Google Chrome 146.0.7680.165
+    • Edge (web)        • edge    • web-javascript • Microsoft Edge 146.0.3856.84
+
+[✓] Network resources [1,053ms]
+    • All expected network resources are available.
+
+! Doctor found issues in 2 categories.
+```

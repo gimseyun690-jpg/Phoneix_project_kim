@@ -1,0 +1,72 @@
+{
+  "id": 4,
+  "name": "문경 활공랜드",
+  "region": "경북 문경",
+  "difficulty": "intermediate",
+  "short_description": "넓은 착륙장과 계곡풍 판단 연습에 적합한 내륙 사이트",
+  "beginner_allowed": true,
+  "weather": {
+    "observed_at": "2026-03-31T06:00:00",
+    "average_wind_speed": 5.1,
+    "wind_direction": 238,
+    "gust_speed": 7.0,
+    "precipitation_mm": 0.0,
+    "summary": "오전 약한 남서풍, 시정 양호",
+    "hourly_forecast": [
+      {
+        "time_label": "09:00",
+        "average_wind_speed": 4.8,
+        "wind_direction": 228,
+        "gust_speed": 6.8,
+        "precipitation_mm": 0.0
+      },
+      {
+        "time_label": "12:00",
+        "average_wind_speed": 5.1,
+        "wind_direction": 238,
+        "gust_speed": 7.0,
+        "precipitation_mm": 0.0
+      },
+      {
+        "time_label": "15:00",
+        "average_wind_speed": 5.5,
+        "wind_direction": 246,
+        "gust_speed": 7.5,
+        "precipitation_mm": 0.0
+      },
+      {
+        "time_label": "18:00",
+        "average_wind_speed": 4.6,
+        "wind_direction": 233,
+        "gust_speed": 6.6,
+        "precipitation_mm": 0.0
+      }
+    ]
+  },
+  "assessment": {
+    "score": 78,
+    "status": "caution",
+    "reasons": [
+      "평균 풍속 5.1m/s가 초급 기준 4.8m/s를 초과합니다."
+    ],
+    "summary_text": "일부 조건이 한계에 가까워 주의가 필요합니다."
+  },
+  "description": "오전에는 비교적 안정적이지만 오후에는 계곡풍이 강해질 수 있어 시간대 판단이 중요합니다.",
+  "takeoff_altitude_m": 690,
+  "landing_altitude_m": 160,
+  "allowed_direction_range": "210-280도",
+  "rule": {
+    "site_id": 4,
+    "allowed_direction_start": 210,
+    "allowed_direction_end": 280,
+    "beginner_max_average_wind": 4.8,
+    "intermediate_max_average_wind": 6.4,
+    "advanced_max_average_wind": 7.8,
+    "max_gust": 8.8,
+    "max_gust_difference": 2.8,
+    "allow_precipitation": false,
+    "beginner_allowed": true,
+    "notes": "오전 비행 적합, 오후 계곡풍 증폭 주의",
+    "id": 4
+  }
+}

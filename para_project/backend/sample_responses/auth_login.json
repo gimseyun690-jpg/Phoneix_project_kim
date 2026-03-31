@@ -1,0 +1,11 @@
+{
+  "access_token": "demo-token-2",
+  "token_type": "bearer",
+  "user": {
+    "id": 2,
+    "email": "pilot@parawing.local",
+    "full_name": "김초급",
+    "pilot_level": "beginner",
+    "is_admin": false
+  }
+}

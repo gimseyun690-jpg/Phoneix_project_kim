@@ -1,0 +1,1 @@
+"""Paragliding backend application package."""

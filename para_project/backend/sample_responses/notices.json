@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "주말 클럽 브리핑 시간 변경",
+    "body": "이번 주 토요일 브리핑은 오전 8시 30분에 착륙장에서 시작합니다.",
+    "category": "club",
+    "is_pinned": true,
+    "published_at": "2026-03-30T06:00:00"
+  },
+  {
+    "id": 2,
+    "title": "양평 패러밸리 초급 교육 편성",
+    "body": "초급자 1차 교육은 양평 패러밸리에서 진행되며 헬멧, 장갑, 무전기 점검이 필수입니다.",
+    "category": "training",
+    "is_pinned": false,
+    "published_at": "2026-03-29T06:00:00"
+  },
+  {
+    "id": 3,
+    "title": "문경 활공랜드 진입로 혼잡 안내",
+    "body": "주말 오전에는 행사 차량이 많아 문경 활공랜드 진입 시간이 지연될 수 있습니다.",
+    "category": "safety",
+    "is_pinned": false,
+    "published_at": "2026-03-28T06:00:00"
+  }
+]

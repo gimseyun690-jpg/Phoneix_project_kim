@@ -1,0 +1,9 @@
+{
+  "name": "패러글라이딩 브리핑",
+  "short_name": "패러앱",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#264653",
+  "description": "Paragliding decision-support MVP"
+}
