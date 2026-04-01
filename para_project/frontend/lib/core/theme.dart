@@ -18,6 +18,16 @@ ThemeData buildAppTheme() {
       backgroundColor: Color(0xFFF4F7F8),
       surfaceTintColor: Colors.transparent,
     ),
+    navigationBarTheme: NavigationBarThemeData(
+      height: 68,
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final isSelected = states.contains(WidgetState.selected);
+        return TextStyle(
+          fontSize: isSelected ? 12 : 11,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        );
+      }),
+    ),
     cardTheme: CardThemeData(
       margin: EdgeInsets.zero,
       elevation: 0,

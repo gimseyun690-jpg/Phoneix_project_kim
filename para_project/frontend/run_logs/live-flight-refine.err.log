@@ -1,0 +1,9 @@
+../../runtime/vm/os_thread.cc: 364: error: Could not start thread DartWorker: 22 (장치가 명령을 인식하지 않습니다.
+)
+version=3.11.4 (stable) (Tue Mar 24 01:02:20 2026 -0700) on "windows_x64"
+pid=20476, thread=16624, isolate_group=(nil)(0000000000000000), isolate=(nil)(0000000000000000)
+os=windows, arch=x64, comp=no, sim=no
+isolate_instructions=0, vm_instructions=7ff723518400
+fp=cf45cfec90, sp=cf45cfec48, pc=7ff7237fcca3
+  pc 0x00007ff7237fcca3 fp 0x000000cf45cfec90 Dart_DetectNullSafety+0x2dc1c3
+-- End of DumpStackTrace

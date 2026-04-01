@@ -373,16 +373,18 @@ class NoticeItem {
       );
 }
 
-enum FlightSessionStatus { recording, completed }
+enum FlightSessionStatus { recording, paused, completed }
 
 extension FlightSessionStatusLabel on FlightSessionStatus {
   String get value => switch (this) {
         FlightSessionStatus.recording => 'recording',
+        FlightSessionStatus.paused => 'paused',
         FlightSessionStatus.completed => 'completed',
       };
 
   String get label => switch (this) {
         FlightSessionStatus.recording => '기록 중',
+        FlightSessionStatus.paused => '일시정지',
         FlightSessionStatus.completed => '저장 완료',
       };
 
@@ -443,6 +445,8 @@ class FlightTrackPoint {
 }
 
 class FlightSession {
+  static const Object _unset = Object();
+
   const FlightSession({
     required this.id,
     required this.userId,
@@ -455,6 +459,7 @@ class FlightSession {
     required this.avgSpeedMps,
     required this.maxSpeedMps,
     required this.trackPointCount,
+    required this.pausedDurationSeconds,
     required this.createdAt,
     required this.updatedAt,
     this.endedAt,
@@ -462,6 +467,7 @@ class FlightSession {
     this.siteName = '',
     this.region = '',
     this.memo = '',
+    this.pausedAt,
     this.lastLatitude,
     this.lastLongitude,
     this.lastAccuracyMeters,
@@ -483,6 +489,8 @@ class FlightSession {
   final double maxSpeedMps;
   final String memo;
   final int trackPointCount;
+  final int pausedDurationSeconds;
+  final DateTime? pausedAt;
   final double? lastLatitude;
   final double? lastLongitude;
   final double? lastAccuracyMeters;
@@ -492,6 +500,8 @@ class FlightSession {
   Duration get duration => Duration(seconds: durationSeconds);
 
   bool get isRecording => status == FlightSessionStatus.recording;
+
+  bool get isPaused => status == FlightSessionStatus.paused;
 
   String get displaySiteName => siteName.trim().isEmpty ? '사이트 미지정' : siteName;
 
@@ -514,6 +524,8 @@ class FlightSession {
     double? maxSpeedMps,
     String? memo,
     int? trackPointCount,
+    int? pausedDurationSeconds,
+    Object? pausedAt = _unset,
     double? lastLatitude,
     double? lastLongitude,
     double? lastAccuracyMeters,
@@ -537,6 +549,10 @@ class FlightSession {
         maxSpeedMps: maxSpeedMps ?? this.maxSpeedMps,
         memo: memo ?? this.memo,
         trackPointCount: trackPointCount ?? this.trackPointCount,
+        pausedDurationSeconds:
+            pausedDurationSeconds ?? this.pausedDurationSeconds,
+        pausedAt:
+            identical(pausedAt, _unset) ? this.pausedAt : pausedAt as DateTime?,
         lastLatitude: lastLatitude ?? this.lastLatitude,
         lastLongitude: lastLongitude ?? this.lastLongitude,
         lastAccuracyMeters: lastAccuracyMeters ?? this.lastAccuracyMeters,
@@ -565,6 +581,10 @@ class FlightSession {
         maxSpeedMps: (json['max_speed_mps'] as num?)?.toDouble() ?? 0,
         memo: (json['memo'] as String?) ?? '',
         trackPointCount: (json['track_point_count'] as int?) ?? 0,
+        pausedDurationSeconds: (json['paused_duration_seconds'] as int?) ?? 0,
+        pausedAt: json['paused_at'] == null
+            ? null
+            : DateTime.parse(json['paused_at'] as String),
         lastLatitude: (json['last_latitude'] as num?)?.toDouble(),
         lastLongitude: (json['last_longitude'] as num?)?.toDouble(),
         lastAccuracyMeters: (json['last_accuracy_meters'] as num?)?.toDouble(),
@@ -589,6 +609,8 @@ class FlightSession {
         'max_speed_mps': maxSpeedMps,
         'memo': memo,
         'track_point_count': trackPointCount,
+        'paused_duration_seconds': pausedDurationSeconds,
+        'paused_at': pausedAt?.toIso8601String(),
         'last_latitude': lastLatitude,
         'last_longitude': lastLongitude,
         'last_accuracy_meters': lastAccuracyMeters,
@@ -636,4 +658,369 @@ class HomeData {
             .map((item) => NoticeItem.fromJson(item as Map<String, dynamic>))
             .toList(),
       );
+}
+
+enum CommunityVisibility { public, siteOnly, private }
+
+extension CommunityVisibilityLabel on CommunityVisibility {
+  String get value => switch (this) {
+        CommunityVisibility.public => 'public',
+        CommunityVisibility.siteOnly => 'site_only',
+        CommunityVisibility.private => 'private',
+      };
+
+  String get label => switch (this) {
+        CommunityVisibility.public => '전체 공개',
+        CommunityVisibility.siteOnly => '해당 이륙장 공개',
+        CommunityVisibility.private => '나만 보기',
+      };
+
+  static CommunityVisibility fromString(String value) =>
+      CommunityVisibility.values.firstWhere(
+        (item) => item.value == value,
+        orElse: () => CommunityVisibility.siteOnly,
+      );
+}
+
+enum FlightJournalMediaType { image, video }
+
+extension FlightJournalMediaTypeLabel on FlightJournalMediaType {
+  String get value => switch (this) {
+        FlightJournalMediaType.image => 'image',
+        FlightJournalMediaType.video => 'video',
+      };
+
+  String get label => switch (this) {
+        FlightJournalMediaType.image => '사진',
+        FlightJournalMediaType.video => '동영상',
+      };
+
+  static FlightJournalMediaType fromString(String value) =>
+      FlightJournalMediaType.values.firstWhere(
+        (item) => item.value == value,
+        orElse: () => FlightJournalMediaType.image,
+      );
+}
+
+class FlightJournalMedia {
+  const FlightJournalMedia({
+    required this.id,
+    required this.type,
+    required this.localPath,
+    required this.fileName,
+    required this.createdAt,
+  });
+
+  final String id;
+  final FlightJournalMediaType type;
+  final String localPath;
+  final String fileName;
+  final DateTime createdAt;
+
+  factory FlightJournalMedia.fromJson(Map<String, dynamic> json) =>
+      FlightJournalMedia(
+        id: json['id'] as String,
+        type: FlightJournalMediaTypeLabel.fromString(json['type'] as String),
+        localPath: json['local_path'] as String,
+        fileName: json['file_name'] as String,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.value,
+        'local_path': localPath,
+        'file_name': fileName,
+        'created_at': createdAt.toIso8601String(),
+      };
+}
+
+class FlightJournalDraft {
+  const FlightJournalDraft({
+    required this.userId,
+    required this.authorName,
+    required this.siteName,
+    required this.siteRegion,
+    required this.title,
+    required this.body,
+    required this.questionText,
+    required this.visibility,
+    required this.flightDate,
+    required this.durationSeconds,
+    required this.totalDistanceMeters,
+    required this.maxAltitudeMeters,
+    required this.weatherSummary,
+    required this.flyabilitySummary,
+    required this.summaryText,
+    required this.media,
+    this.postId,
+    this.flightSessionId,
+    this.siteId,
+    this.flightStartedAt,
+    this.flightEndedAt,
+  });
+
+  final String? postId;
+  final int userId;
+  final String authorName;
+  final String? flightSessionId;
+  final int? siteId;
+  final String siteName;
+  final String siteRegion;
+  final String title;
+  final String body;
+  final String questionText;
+  final CommunityVisibility visibility;
+  final DateTime flightDate;
+  final DateTime? flightStartedAt;
+  final DateTime? flightEndedAt;
+  final int durationSeconds;
+  final double totalDistanceMeters;
+  final double maxAltitudeMeters;
+  final String weatherSummary;
+  final String flyabilitySummary;
+  final String summaryText;
+  final List<FlightJournalMedia> media;
+}
+
+class FlightJournalPost {
+  static const Object _unset = Object();
+
+  const FlightJournalPost({
+    required this.id,
+    required this.userId,
+    required this.authorName,
+    required this.siteName,
+    required this.siteRegion,
+    required this.title,
+    required this.body,
+    required this.questionText,
+    required this.visibility,
+    required this.flightDate,
+    required this.durationSeconds,
+    required this.totalDistanceMeters,
+    required this.maxAltitudeMeters,
+    required this.weatherSummary,
+    required this.flyabilitySummary,
+    required this.summaryText,
+    required this.likedUserIds,
+    required this.commentCount,
+    required this.media,
+    required this.createdAt,
+    required this.updatedAt,
+    this.flightSessionId,
+    this.siteId,
+    this.flightStartedAt,
+    this.flightEndedAt,
+  });
+
+  final String id;
+  final int userId;
+  final String authorName;
+  final String? flightSessionId;
+  final int? siteId;
+  final String siteName;
+  final String siteRegion;
+  final String title;
+  final String body;
+  final String questionText;
+  final CommunityVisibility visibility;
+  final DateTime flightDate;
+  final DateTime? flightStartedAt;
+  final DateTime? flightEndedAt;
+  final int durationSeconds;
+  final double totalDistanceMeters;
+  final double maxAltitudeMeters;
+  final String weatherSummary;
+  final String flyabilitySummary;
+  final String summaryText;
+  final List<int> likedUserIds;
+  final int commentCount;
+  final List<FlightJournalMedia> media;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  int get likeCount => likedUserIds.length;
+
+  bool get hasQuestion => questionText.trim().isNotEmpty;
+
+  bool get hasMedia => media.isNotEmpty;
+
+  int get imageCount =>
+      media.where((item) => item.type == FlightJournalMediaType.image).length;
+
+  int get videoCount =>
+      media.where((item) => item.type == FlightJournalMediaType.video).length;
+
+  bool isLikedBy(int userId) => likedUserIds.contains(userId);
+
+  FlightJournalPost copyWith({
+    String? id,
+    int? userId,
+    String? authorName,
+    Object? flightSessionId = _unset,
+    Object? siteId = _unset,
+    String? siteName,
+    String? siteRegion,
+    String? title,
+    String? body,
+    String? questionText,
+    CommunityVisibility? visibility,
+    DateTime? flightDate,
+    Object? flightStartedAt = _unset,
+    Object? flightEndedAt = _unset,
+    int? durationSeconds,
+    double? totalDistanceMeters,
+    double? maxAltitudeMeters,
+    String? weatherSummary,
+    String? flyabilitySummary,
+    String? summaryText,
+    List<int>? likedUserIds,
+    int? commentCount,
+    List<FlightJournalMedia>? media,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) =>
+      FlightJournalPost(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        authorName: authorName ?? this.authorName,
+        flightSessionId: identical(flightSessionId, _unset)
+            ? this.flightSessionId
+            : flightSessionId as String?,
+        siteId: identical(siteId, _unset) ? this.siteId : siteId as int?,
+        siteName: siteName ?? this.siteName,
+        siteRegion: siteRegion ?? this.siteRegion,
+        title: title ?? this.title,
+        body: body ?? this.body,
+        questionText: questionText ?? this.questionText,
+        visibility: visibility ?? this.visibility,
+        flightDate: flightDate ?? this.flightDate,
+        flightStartedAt: identical(flightStartedAt, _unset)
+            ? this.flightStartedAt
+            : flightStartedAt as DateTime?,
+        flightEndedAt: identical(flightEndedAt, _unset)
+            ? this.flightEndedAt
+            : flightEndedAt as DateTime?,
+        durationSeconds: durationSeconds ?? this.durationSeconds,
+        totalDistanceMeters: totalDistanceMeters ?? this.totalDistanceMeters,
+        maxAltitudeMeters: maxAltitudeMeters ?? this.maxAltitudeMeters,
+        weatherSummary: weatherSummary ?? this.weatherSummary,
+        flyabilitySummary: flyabilitySummary ?? this.flyabilitySummary,
+        summaryText: summaryText ?? this.summaryText,
+        likedUserIds: likedUserIds ?? this.likedUserIds,
+        commentCount: commentCount ?? this.commentCount,
+        media: media ?? this.media,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+
+  factory FlightJournalPost.fromJson(Map<String, dynamic> json) =>
+      FlightJournalPost(
+        id: json['id'] as String,
+        userId: json['user_id'] as int,
+        authorName: json['author_name'] as String,
+        flightSessionId: json['flight_session_id'] as String?,
+        siteId: json['site_id'] as int?,
+        siteName: json['site_name'] as String? ?? '',
+        siteRegion: json['site_region'] as String? ?? '',
+        title: json['title'] as String,
+        body: json['body'] as String? ?? '',
+        questionText: json['question_text'] as String? ?? '',
+        visibility:
+            CommunityVisibilityLabel.fromString(json['visibility'] as String),
+        flightDate: DateTime.parse(json['flight_date'] as String),
+        flightStartedAt: json['flight_started_at'] == null
+            ? null
+            : DateTime.parse(json['flight_started_at'] as String),
+        flightEndedAt: json['flight_ended_at'] == null
+            ? null
+            : DateTime.parse(json['flight_ended_at'] as String),
+        durationSeconds: json['duration_seconds'] as int? ?? 0,
+        totalDistanceMeters:
+            (json['total_distance_meters'] as num?)?.toDouble() ?? 0,
+        maxAltitudeMeters:
+            (json['max_altitude_meters'] as num?)?.toDouble() ?? 0,
+        weatherSummary: json['weather_summary'] as String? ?? '',
+        flyabilitySummary: json['flyability_summary'] as String? ?? '',
+        summaryText: json['summary_text'] as String? ?? '',
+        likedUserIds: (json['liked_user_ids'] as List<dynamic>? ?? const [])
+            .map((item) => item as int)
+            .toList(growable: false),
+        commentCount: json['comment_count'] as int? ?? 0,
+        media: (json['media'] as List<dynamic>? ?? const [])
+            .map((item) =>
+                FlightJournalMedia.fromJson(item as Map<String, dynamic>))
+            .toList(growable: false),
+        createdAt: DateTime.parse(json['created_at'] as String),
+        updatedAt: DateTime.parse(json['updated_at'] as String),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'user_id': userId,
+        'author_name': authorName,
+        'flight_session_id': flightSessionId,
+        'site_id': siteId,
+        'site_name': siteName,
+        'site_region': siteRegion,
+        'title': title,
+        'body': body,
+        'question_text': questionText,
+        'visibility': visibility.value,
+        'flight_date': flightDate.toIso8601String(),
+        'flight_started_at': flightStartedAt?.toIso8601String(),
+        'flight_ended_at': flightEndedAt?.toIso8601String(),
+        'duration_seconds': durationSeconds,
+        'total_distance_meters': totalDistanceMeters,
+        'max_altitude_meters': maxAltitudeMeters,
+        'weather_summary': weatherSummary,
+        'flyability_summary': flyabilitySummary,
+        'summary_text': summaryText,
+        'liked_user_ids': likedUserIds,
+        'comment_count': commentCount,
+        'media': media.map((item) => item.toJson()).toList(),
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
+}
+
+class PostComment {
+  const PostComment({
+    required this.id,
+    required this.postId,
+    required this.userId,
+    required this.authorName,
+    required this.body,
+    required this.createdAt,
+    this.isFeedback = false,
+  });
+
+  final String id;
+  final String postId;
+  final int userId;
+  final String authorName;
+  final String body;
+  final DateTime createdAt;
+  final bool isFeedback;
+
+  factory PostComment.fromJson(Map<String, dynamic> json) => PostComment(
+        id: json['id'] as String,
+        postId: json['post_id'] as String,
+        userId: json['user_id'] as int,
+        authorName: json['author_name'] as String,
+        body: json['body'] as String,
+        createdAt: DateTime.parse(json['created_at'] as String),
+        isFeedback: json['is_feedback'] as bool? ?? false,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'post_id': postId,
+        'user_id': userId,
+        'author_name': authorName,
+        'body': body,
+        'created_at': createdAt.toIso8601String(),
+        'is_feedback': isFeedback,
+      };
 }

@@ -1,5 +1,5 @@
 name: paragliding_mvp_frontend
-description: Paragliding decision-support MVP built with Flutter.
+description: Korea-focused paragliding companion app built with Flutter.
 publish_to: "none"
 
 version: 0.1.0+1
@@ -11,8 +11,13 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  flutter_map: ^7.0.2
   geolocator: ^13.0.2
+  geocoding: ^3.0.0
   http: ^1.3.0
+  image_picker: ^1.1.2
+  latlong2: ^0.9.1
+  maplibre: ^0.3.4+1
   share_plus: ^10.1.4
   shared_preferences: ^2.3.2
 
@@ -23,3 +28,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/branding/
+    - assets/data/

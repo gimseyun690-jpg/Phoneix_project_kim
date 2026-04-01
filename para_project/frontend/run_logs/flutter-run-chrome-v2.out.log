@@ -1,0 +1,16 @@
+Launching lib\main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             38.3s
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+Debug service listening on ws://127.0.0.1:62128/-kORfDy0gtI=/ws
+A Dart VM Service on Chrome is available at: http://127.0.0.1:62128/-kORfDy0gtI=
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:62128/-kORfDy0gtI=/devtools/?uri=ws://127.0.0.1:62128/-kORfDy0gtI=/ws
+Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.
+Found an existing <meta name="viewport"> tag. Flutter Web uses its own viewport configuration for better compatibility with Flutter. This tag will be replaced.

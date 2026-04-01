@@ -3,6 +3,22 @@ import 'package:paragliding_mvp_frontend/core/flight_record_manager.dart';
 import 'package:paragliding_mvp_frontend/models/app_models.dart';
 
 void main() {
+  test('추적 상태 알림은 저장 가능한 구조로 직렬화된다', () {
+    final notice = FlightTrackingNotice(
+      code: 'gps_weak',
+      title: 'GPS 신호가 약합니다.',
+      description: '정확도가 낮아 기록 오차가 커질 수 있습니다.',
+      tone: FlightTrackingNoticeTone.caution,
+      updatedAt: DateTime(2026, 4, 1, 12, 30),
+    );
+
+    final restored = FlightTrackingNotice.fromJson(notice.toJson());
+
+    expect(restored.code, 'gps_weak');
+    expect(restored.title, 'GPS 신호가 약합니다.');
+    expect(restored.tone, FlightTrackingNoticeTone.caution);
+  });
+
   group('비행 기록 공유 데이터', () {
     final session = FlightSession(
       id: 'session-1',
@@ -21,6 +37,7 @@ void main() {
       maxSpeedMps: 8.4,
       memo: '오전 약한 계곡풍에서 안정적으로 비행했습니다.',
       trackPointCount: 2,
+      pausedDurationSeconds: 0,
       lastLatitude: 36.586,
       lastLongitude: 128.186,
       lastAccuracyMeters: 6,

@@ -145,6 +145,8 @@ class _TrainingLogsScreenState extends State<TrainingLogsScreen> {
       );
     }
 
+    final isCompactLayout = MediaQuery.sizeOf(context).width < 560;
+
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
@@ -163,75 +165,137 @@ class _TrainingLogsScreenState extends State<TrainingLogsScreen> {
                         ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _pickDate,
-                          icon: const Icon(Icons.calendar_today_outlined),
-                          label: Text(formatDate(_selectedDate)),
+                  if (isCompactLayout) ...[
+                    OutlinedButton.icon(
+                      onPressed: _pickDate,
+                      icon: const Icon(Icons.calendar_today_outlined),
+                      label: Text(formatDate(_selectedDate)),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      key: ValueKey(_selectedSiteId),
+                      initialValue: _selectedSiteId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: '사이트'),
+                      items: _sites
+                          .map(
+                            (site) => DropdownMenuItem<int>(
+                              value: site.id,
+                              child: Text(
+                                site.name,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSiteId = value;
+                        });
+                      },
+                    ),
+                  ] else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickDate,
+                            icon: const Icon(Icons.calendar_today_outlined),
+                            label: Text(formatDate(_selectedDate)),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: DropdownButtonFormField<int>(
-                          key: ValueKey(_selectedSiteId),
-                          initialValue: _selectedSiteId,
-                          decoration: const InputDecoration(labelText: '사이트'),
-                          items: _sites
-                              .map(
-                                (site) => DropdownMenuItem<int>(
-                                  value: site.id,
-                                  child: Text(site.name),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSiteId = value;
-                            });
-                          },
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButtonFormField<int>(
+                            key: ValueKey(_selectedSiteId),
+                            initialValue: _selectedSiteId,
+                            isExpanded: true,
+                            decoration: const InputDecoration(labelText: '사이트'),
+                            items: _sites
+                                .map(
+                                  (site) => DropdownMenuItem<int>(
+                                    value: site.id,
+                                    child: Text(
+                                      site.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedSiteId = value;
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _trainingTypeController,
                     decoration: const InputDecoration(labelText: '훈련 유형'),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          key: ValueKey(_difficulty),
-                          initialValue: _difficulty,
-                          decoration: const InputDecoration(labelText: '난이도'),
-                          items: const [
-                            DropdownMenuItem(value: 'easy', child: Text('쉬움')),
-                            DropdownMenuItem(
-                                value: 'medium', child: Text('보통')),
-                            DropdownMenuItem(value: 'hard', child: Text('어려움')),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _difficulty = value;
-                              });
-                            }
-                          },
+                  if (isCompactLayout) ...[
+                    DropdownButtonFormField<String>(
+                      key: ValueKey(_difficulty),
+                      initialValue: _difficulty,
+                      isExpanded: true,
+                      decoration: const InputDecoration(labelText: '난이도'),
+                      items: const [
+                        DropdownMenuItem(value: 'easy', child: Text('쉬움')),
+                        DropdownMenuItem(value: 'medium', child: Text('보통')),
+                        DropdownMenuItem(value: 'hard', child: Text('어려움')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _difficulty = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _memoController,
+                      decoration: const InputDecoration(labelText: '메모'),
+                    ),
+                  ] else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            key: ValueKey(_difficulty),
+                            initialValue: _difficulty,
+                            isExpanded: true,
+                            decoration: const InputDecoration(labelText: '난이도'),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'easy', child: Text('쉬움')),
+                              DropdownMenuItem(
+                                  value: 'medium', child: Text('보통')),
+                              DropdownMenuItem(
+                                  value: 'hard', child: Text('어려움')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _difficulty = value;
+                                });
+                              }
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: _memoController,
-                          decoration: const InputDecoration(labelText: '메모'),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _memoController,
+                            decoration: const InputDecoration(labelText: '메모'),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(height: 6),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
@@ -296,22 +360,37 @@ class _TrainingLogsScreenState extends State<TrainingLogsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${log.siteName} | ${log.trainingType}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                    if (isCompactLayout) ...[
+                      Text(
+                        '${log.siteName} | ${log.trainingType}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(formatDate(log.trainingDate)),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${log.siteName} | ${log.trainingType}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
                           ),
-                        ),
-                        Text(formatDate(log.trainingDate)),
-                      ],
-                    ),
+                          const SizedBox(width: 12),
+                          Text(formatDate(log.trainingDate)),
+                        ],
+                      ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,

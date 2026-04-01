@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/app_models.dart';
 import '../repositories/app_repository.dart';
+import '../widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
@@ -70,6 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Center(
+                      child: AppLogo(size: 94),
+                    ),
+                    const SizedBox(height: 20),
                     Text(
                       '패러글라이딩 브리핑',
                       style:

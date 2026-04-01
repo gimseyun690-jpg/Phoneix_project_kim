@@ -5,7 +5,7 @@ import 'app_repository.dart';
 class MockAppRepository implements AppRepository {
   MockAppRepository();
 
-  final List<Map<String, dynamic>> _siteMaps = _buildSiteMaps();
+  List<Map<String, dynamic>> get _siteMaps => _buildSiteMaps();
   final List<Map<String, dynamic>> _noticeMaps = _buildNoticeMaps();
   final List<Map<String, dynamic>> _trainingLogMaps = _buildTrainingLogMaps();
 
