@@ -426,17 +426,39 @@ class _FlightJournalComposerScreenState
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: FilledButton.icon(
-          onPressed: _saving ? null : _save,
-          icon: const Icon(Icons.upload_rounded),
-          label: Text(
-            _saving
-                ? '저장 중...'
-                : _shareToCommunity
-                    ? selectedSite == null
-                        ? '커뮤니티에 게시하기'
-                        : '${selectedSite.name} 피드에 게시하기'
-                    : '나만 보기로 저장하기',
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: Theme.of(context)
+                  .colorScheme
+                  .outlineVariant
+                  .withValues(alpha: 0.5),
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x10000000),
+                blurRadius: 18,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.upload_rounded),
+              label: Text(
+                _saving
+                    ? '저장 중...'
+                    : _shareToCommunity
+                        ? selectedSite == null
+                            ? '커뮤니티에 게시하기'
+                            : '${selectedSite.name} 피드에 게시하기'
+                        : '나만 보기로 저장하기',
+              ),
+            ),
           ),
         ),
       ),
@@ -586,24 +608,48 @@ class _FlightJournalComposerScreenState
                 '사진은 최대 6장, 동영상은 현재 1개까지 첨부할 수 있습니다. 게시 전에 현장 사진을 더하면 피드에서 더 읽기 쉬워집니다.',
             child: Column(
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickPhotos,
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: const Text('사진 추가'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _pickVideo,
-                        icon: const Icon(Icons.videocam_outlined),
-                        label: const Text('동영상 추가'),
-                      ),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final stacked = constraints.maxWidth < 380;
+                    if (stacked) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _pickPhotos,
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: const Text('사진 추가'),
+                          ),
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            onPressed: _pickVideo,
+                            icon: const Icon(Icons.videocam_outlined),
+                            label: const Text('동영상 추가'),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickPhotos,
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: const Text('사진 추가'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _pickVideo,
+                            icon: const Icon(Icons.videocam_outlined),
+                            label: const Text('동영상 추가'),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 if (_media.isEmpty) ...[
                   const SizedBox(height: 14),
@@ -611,8 +657,11 @@ class _FlightJournalComposerScreenState
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F7F8),
-                      borderRadius: BorderRadius.circular(16),
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                      ),
                     ),
                     child: const Text('아직 첨부한 사진이나 동영상이 없습니다.'),
                   ),
@@ -668,6 +717,15 @@ class _FlightJournalComposerScreenState
                         label: Text(visibility.label),
                         selected:
                             _shareToCommunity && _visibility == visibility,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        selectedColor: const Color(0xFFE0EFF4),
+                        backgroundColor: const Color(0xFFF7F9FB),
+                        side: BorderSide(
+                          color: _shareToCommunity && _visibility == visibility
+                              ? const Color(0xFF1F6E82).withValues(alpha: 0.24)
+                              : const Color(0xFFE2E8F0),
+                        ),
                         onSelected: _shareToCommunity
                             ? (_) {
                                 setState(() {
@@ -679,6 +737,15 @@ class _FlightJournalComposerScreenState
                     ChoiceChip(
                       label: const Text('나만 보기'),
                       selected: !_shareToCommunity,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                      selectedColor: const Color(0xFFE0EFF4),
+                      backgroundColor: const Color(0xFFF7F9FB),
+                      side: BorderSide(
+                        color: !_shareToCommunity
+                            ? const Color(0xFF1F6E82).withValues(alpha: 0.24)
+                            : const Color(0xFFE2E8F0),
+                      ),
                       onSelected: (_) {
                         setState(() {
                           _shareToCommunity = false;
@@ -714,7 +781,7 @@ class _JournalSummaryHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -747,29 +814,30 @@ class _JournalSummaryHero extends StatelessWidget {
           if (existingPost) const SizedBox(height: 12),
           Text(
             session.displaySiteName,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
+                  height: 1.2,
                 ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '${formatDate(session.startedAt)} · ${session.displayRegion}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.92),
                 ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Text(
             summaryText,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.white,
                   height: 1.45,
                 ),
           ),
           if (weatherSummary.trim().isNotEmpty ||
               flyabilitySummary.trim().isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -825,8 +893,18 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(
+          color: Theme.of(context)
+              .colorScheme
+              .outlineVariant
+              .withValues(alpha: 0.5),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -839,9 +917,12 @@ class _SectionCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             child,
           ],
         ),
@@ -860,13 +941,17 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F7),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+        ),
       ),
       child: Text(
         text,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
+              color: const Color(0xFF334155),
             ),
       ),
     );
@@ -894,8 +979,11 @@ class _MediaAttachmentTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withValues(alpha: 0.14),
+        ),
       ),
       child: Row(
         children: [
@@ -908,7 +996,7 @@ class _MediaAttachmentTile extends StatelessWidget {
             ),
             child: Icon(icon, color: color),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

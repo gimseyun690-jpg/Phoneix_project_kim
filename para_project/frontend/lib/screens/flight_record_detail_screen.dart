@@ -122,6 +122,79 @@ class _FlightRecordDetailScreenState extends State<FlightRecordDetailScreen> {
     );
   }
 
+  Future<void> _confirmDeleteCurrentSession() async {
+    final detail =
+        await widget.flightRecordManager.getSessionDetail(widget.sessionId);
+    if (!mounted) {
+      return;
+    }
+    if (detail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('삭제할 비행 기록을 찾지 못했습니다.')),
+      );
+      return;
+    }
+
+    final linkedPost =
+        widget.communityManager.findPostBySessionId(widget.sessionId);
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('비행 기록 삭제'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${detail.session.displaySiteName} 기록을 삭제하시겠습니까?'),
+                const SizedBox(height: 8),
+                const Text('삭제 후에는 되돌릴 수 없습니다.'),
+                if (linkedPost != null) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    '이미 작성한 비행일지는 유지되고, 연결된 비행 기록만 삭제됩니다.',
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('삭제'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    final deleted =
+        await widget.flightRecordManager.deleteSession(widget.sessionId);
+    if (!mounted) {
+      return;
+    }
+
+    final message = deleted
+        ? '비행 기록이 삭제되었습니다.'
+        : (widget.flightRecordManager.errorMessage ?? '비행 기록을 삭제하지 못했습니다.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+    if (deleted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   void _openJournalFlow() {
     final existingPost =
         widget.communityManager.findPostBySessionId(widget.sessionId);
@@ -723,6 +796,19 @@ class _FlightRecordDetailScreenState extends State<FlightRecordDetailScreen> {
               ),
             ],
           ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              side: BorderSide(color: Theme.of(context).colorScheme.error),
+            ),
+            onPressed: _confirmDeleteCurrentSession,
+            icon: const Icon(Icons.delete_outline_rounded),
+            label: const Text('비행 기록 삭제'),
+          ),
         ),
         if (siteDetail != null) ...[
           const SizedBox(height: 10),

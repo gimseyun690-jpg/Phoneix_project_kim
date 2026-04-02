@@ -307,28 +307,34 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
 
     final delta = _bearingDelta(currentBearing, candidate);
     final absoluteDelta = delta.abs();
-    if (absoluteDelta < 2.5) {
+    if (absoluteDelta < 1.8) {
       return currentBearing;
+    }
+    if (absoluteDelta < 10) {
+      return _normalizeBearing(currentBearing + (delta * 0.52));
     }
     if (absoluteDelta > 90 && speed < 5.5) {
       return currentBearing;
     }
 
     double smoothing = switch (speed) {
-      >= 12 => 0.62,
-      >= 8 => 0.48,
-      >= 4.5 => 0.36,
-      _ => 0.26,
+      >= 12 => 0.68,
+      >= 8 => 0.54,
+      >= 5 => 0.40,
+      _ => 0.30,
     };
     if (accuracy > 18) {
       smoothing -= 0.08;
     }
     if (absoluteDelta > 70 && speed < 7) {
-      smoothing = min(smoothing, 0.24);
+      smoothing = min(smoothing, 0.28);
+    }
+    if ((movedMeters ?? 0) > max(8.0, accuracy * 1.8) && speed >= 7) {
+      smoothing += 0.04;
     }
 
     return _normalizeBearing(
-      currentBearing + (delta * smoothing.clamp(0.18, 0.62)),
+      currentBearing + (delta * smoothing.clamp(0.22, 0.72)),
     );
   }
 

@@ -426,7 +426,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
           slivers: [
             SliverAppBar(
               pinned: true,
-              expandedHeight: 438,
+              expandedHeight: 396,
               backgroundColor: const Color(0xFF173845),
               foregroundColor: Colors.white,
               surfaceTintColor: Colors.transparent,
@@ -458,7 +458,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             ),
             SliverToBoxAdapter(
               child: Transform.translate(
-                offset: const Offset(0, -24),
+                offset: const Offset(0, -14),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   child: Column(
@@ -583,25 +583,24 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                const Color(0xFF10232B).withValues(alpha: 0.14),
-                const Color(0xFF10232B).withValues(alpha: 0.03),
-                const Color(0xFF0D2028).withValues(alpha: 0.58),
+                const Color(0xFF10232B).withValues(alpha: 0.10),
+                const Color(0xFF10232B).withValues(alpha: 0.02),
+                const Color(0xFF0D2028).withValues(alpha: 0.42),
               ],
               stops: const [0, 0.44, 1],
             ),
           ),
         ),
         Positioned(
-          top: MediaQuery.of(context).padding.top + 82,
+          top: MediaQuery.of(context).padding.top + 74,
           left: 16,
-          right: 132,
+          right: 116,
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               _OverlayChip(
                   icon: Icons.place_outlined, text: state.detail.site.region),
-              _OverlayChip(icon: Icons.air_rounded, text: _toneLabel(tone)),
               _OverlayChip(
                 icon: Icons.cloud_outlined,
                 text: state.weather.isFallback ? '등록 비행장 기준' : '좌표 기준 실황',
@@ -610,7 +609,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
           ),
         ),
         Positioned(
-          top: MediaQuery.of(context).padding.top + 82,
+          top: MediaQuery.of(context).padding.top + 74,
           right: 16,
           child: MapViewToggle(
             value: _mapViewType,
@@ -620,7 +619,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
         ),
         Positioned(
           right: 16,
-          bottom: 156,
+          bottom: 136,
           child: Column(
             children: [
               _MapActionButton(
@@ -640,7 +639,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
         Positioned(
           left: 16,
           right: 16,
-          bottom: 24,
+          bottom: 18,
           child: _buildHeroSummary(context, state, tone, statusColor),
         ),
       ],
@@ -657,53 +656,54 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 360;
-        final temperatureText = Text(
-          _formatTemperature(state.weather.temperatureCelsius),
-          style: theme.textTheme.displaySmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            height: 0.94,
-          ),
-        );
-
-        final summaryBlock = Column(
+        final temperatureBlock = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _bestSummaryText(state),
-              maxLines: isNarrow ? 3 : 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.90),
-                height: 1.42,
+              _formatTemperature(state.weather.temperatureCelsius),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                height: 0.92,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 2),
             Text(
-              '관측 ${_formatClock(state.weather.observedAt)}',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.white.withValues(alpha: 0.72),
+              '현재 기온',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.70),
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         );
 
+        final summaryText = Text(
+          _bestSummaryText(state),
+          maxLines: isNarrow ? 3 : 2,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.90),
+            height: 1.36,
+          ),
+        );
+
         return ClipRRect(
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(22),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF102630).withValues(alpha: 0.54),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                color: const Color(0xFF102630).withValues(alpha: 0.36),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x22000000),
-                    blurRadius: 24,
-                    offset: Offset(0, 12),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
                   ),
                 ],
               ),
@@ -722,24 +722,25 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                               state.detail.site.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleLarge?.copyWith(
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 2),
                             Text(
-                              state.detail.site.region,
+                              '${state.detail.site.region} · 관측 ${_formatClock(state.weather.observedAt)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.76),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.74),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       _StatusPill(
                         label: _toneLabel(tone),
                         color: statusColor,
@@ -747,39 +748,59 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   if (isNarrow) ...[
-                    temperatureText,
+                    temperatureBlock,
+                    const SizedBox(height: 8),
+                    summaryText,
                     const SizedBox(height: 10),
-                    summaryBlock,
-                  ] else
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
-                        temperatureText,
-                        const SizedBox(width: 14),
-                        Expanded(child: summaryBlock),
+                        _HeroMetric(
+                          label: '풍속',
+                          value: _formatSpeed(state.weather.windSpeedMps),
+                        ),
+                        _HeroMetric(
+                          label: '풍향',
+                          value: _formatHeading(state.weather.windDirection),
+                        ),
                       ],
                     ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _HeroMetric(
-                        label: '풍속',
-                        value: _formatSpeed(state.weather.windSpeedMps),
-                      ),
-                      _HeroMetric(
-                        label: '풍향',
-                        value: _formatHeading(state.weather.windDirection),
-                      ),
-                      _HeroMetric(
-                        label: '관측',
-                        value: _formatClock(state.weather.observedAt),
-                      ),
-                    ],
-                  ),
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        temperatureBlock,
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              summaryText,
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _HeroMetric(
+                                    label: '풍속',
+                                    value: _formatSpeed(
+                                        state.weather.windSpeedMps),
+                                  ),
+                                  _HeroMetric(
+                                    label: '풍향',
+                                    value: _formatHeading(
+                                        state.weather.windDirection),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -815,7 +836,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                       '시간대별 예보',
                       style: Theme.of(context)
                           .textTheme
-                          .titleLarge
+                          .titleMedium
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
@@ -831,7 +852,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
               _StatusPill(label: _toneLabel(tone), color: statusColor),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -840,7 +861,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                 .map((item) => _WeatherAlertChip(alert: item))
                 .toList(growable: false),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           if (state.forecast.isEmpty)
             const _InlineMessage(
               title: '예보 데이터가 아직 준비되지 않았습니다.',
@@ -848,11 +869,11 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 248,
+              height: 232,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.forecast.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   final item = state.forecast[index];
                   return _ForecastTile(
@@ -871,10 +892,10 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.78),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white.withValues(alpha: 0.74),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFDDE8EC)),
                 ),
                 child: Column(
@@ -956,7 +977,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             '주간 / 장기 예보',
             style: Theme.of(context)
                 .textTheme
-                .titleLarge
+                .titleMedium
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
@@ -966,7 +987,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                   color: const Color(0xFF4C6672),
                 ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           if (state.extendedForecast.isEmpty)
             const _InlineMessage(
               title: '장기 예보를 아직 불러오지 못했습니다.',
@@ -974,11 +995,11 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 292,
+              height: 252,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.extendedForecast.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, index) {
                   final item = state.extendedForecast[index];
                   return _DailyForecastTile(
@@ -998,10 +1019,10 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
               const SizedBox(height: 14),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.78),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white.withValues(alpha: 0.74),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: const Color(0xFFDDE8EC)),
                 ),
                 child: Column(
@@ -1582,14 +1603,14 @@ class _SectionCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: Colors.white.withValues(alpha: 0.84),
+      color: Colors.white.withValues(alpha: 0.80),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.96)),
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.90)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: child,
       ),
     );
@@ -1732,11 +1753,11 @@ class _ForecastTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 132,
-        padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
+        width: 122,
+        padding: const EdgeInsets.fromLTRB(9, 8, 9, 8),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? const Color(0xFF58A4B0) : const Color(0xFFDCE6EB),
             width: selected ? 1.5 : 1,
@@ -1765,13 +1786,13 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 14,
+              size: 13,
               color: foreground,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               _formatTemperature(item.temperatureCelsius),
               maxLines: 1,
@@ -1781,7 +1802,7 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               _formatSpeed(item.windSpeedMps),
               maxLines: 1,
@@ -1791,14 +1812,14 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Row(
               children: [
                 Transform.rotate(
                   angle: ((item.windDirection - 90) * math.pi) / 180,
-                  child: Icon(Icons.navigation_rounded, size: 16, color: muted),
+                  child: Icon(Icons.navigation_rounded, size: 15, color: muted),
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     _shortHeading(item.windDirection),
@@ -1812,17 +1833,17 @@ class _ForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
                 child: Text(
                   item.summaryText ?? '참고 예보',
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: muted,
-                        fontSize: 11,
+                        fontSize: 10.5,
                         height: 1.15,
                       ),
                 ),
@@ -1863,11 +1884,11 @@ class _DailyForecastTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 140,
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        width: 132,
+        padding: const EdgeInsets.fromLTRB(9, 7, 9, 7),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? const Color(0xFF58A4B0) : const Color(0xFFDCE6EB),
             width: selected ? 1.5 : 1,
@@ -1896,13 +1917,13 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 14,
+              size: 13,
               color: foreground,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               _formatDailyTemperatureRange(
                 item.minTemperatureCelsius,
@@ -1915,7 +1936,7 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               _formatSpeed(item.windSpeedMps),
               maxLines: 1,
@@ -1925,14 +1946,14 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Row(
               children: [
                 Transform.rotate(
                   angle: (((item.windDirection ?? 0) - 90) * math.pi) / 180,
-                  child: Icon(Icons.navigation_rounded, size: 16, color: muted),
+                  child: Icon(Icons.navigation_rounded, size: 15, color: muted),
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     item.windDirection == null
@@ -1948,29 +1969,29 @@ class _DailyForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
                 child: Text(
                   _dailySummaryText(item),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: muted,
-                        fontSize: 11,
+                        fontSize: 10.5,
                         height: 1.15,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: selected ? 0.26 : 0.14),
                   borderRadius: BorderRadius.circular(999),
@@ -1980,7 +2001,7 @@ class _DailyForecastTile extends StatelessWidget {
                   style: TextStyle(
                     color: selected ? Colors.white : badgeColor,
                     fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                    fontSize: 11.5,
                   ),
                 ),
               ),
@@ -2006,7 +2027,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: dark
             ? color.withValues(alpha: 0.20)
@@ -2018,6 +2039,7 @@ class _StatusPill extends StatelessWidget {
         style: TextStyle(
           color: dark ? Colors.white : color,
           fontWeight: FontWeight.w800,
+          fontSize: 12.5,
         ),
       ),
     );
@@ -2033,13 +2055,22 @@ class _InfoBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      constraints: const BoxConstraints(maxWidth: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFFDDE8EC)),
       ),
-      child: Text('$label  $value'),
+      child: Text(
+        '$label  $value',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF23414F),
+            ),
+      ),
     );
   }
 }
@@ -2054,10 +2085,10 @@ class _InlineMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.76),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFDDE8EC)),
       ),
       child: Column(
@@ -2074,7 +2105,7 @@ class _InlineMessage extends StatelessWidget {
             description,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: const Color(0xFF47616D),
-                  height: 1.45,
+                  height: 1.4,
                 ),
           ),
         ],
@@ -2092,23 +2123,28 @@ class _OverlayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      constraints: const BoxConstraints(maxWidth: 156),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2430).withValues(alpha: 0.48),
+        color: const Color(0xFF0F2430).withValues(alpha: 0.36),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: Colors.white),
-          const SizedBox(width: 5),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12.5,
+          Icon(icon, size: 13.5, color: Colors.white),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 11.8,
+              ),
             ),
           ),
         ],
@@ -2133,15 +2169,15 @@ class _MapActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: const Color(0xFF0F2430).withValues(alpha: 0.54),
-        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF0F2430).withValues(alpha: 0.44),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, color: Colors.white, size: 20),
+            width: 36,
+            height: 36,
+            child: Icon(icon, color: Colors.white, size: 18),
           ),
         ),
       ),
@@ -2224,11 +2260,11 @@ class _HeroMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 88),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      constraints: const BoxConstraints(minWidth: 76),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
       ),
       child: Column(
@@ -2239,6 +2275,7 @@ class _HeroMetric extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.white.withValues(alpha: 0.68),
+                  fontSize: 11.5,
                 ),
           ),
           const SizedBox(height: 4),

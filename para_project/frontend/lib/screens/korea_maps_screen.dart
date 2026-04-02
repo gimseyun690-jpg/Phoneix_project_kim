@@ -154,10 +154,7 @@ class _KoreaMapsScreenState extends State<KoreaMapsScreen>
         }
 
         final data = snapshot.data!;
-        final selectedSite = _selectedSite ??
-            (data.siteSnapshots.isNotEmpty
-                ? MapSiteSelection.registered(data.siteSnapshots.first.site.id)
-                : null);
+        final selectedSite = _selectedSite;
 
         return Column(
           children: [
@@ -318,7 +315,7 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _syncIncomingSelection(useDefault: true);
+    _syncIncomingSelection(useDefault: false);
     unawaited(_loadAreaPreview(_mapCenter));
     unawaited(_loadSelectionData());
   }
@@ -351,8 +348,7 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
   }
 
   void _syncIncomingSelection({required bool useDefault}) {
-    final nextRegistered = _findSiteById(widget.selectedSite?.siteId) ??
-        (useDefault ? widget.siteSnapshots.firstOrNull : null);
+    final nextRegistered = _findSiteById(widget.selectedSite?.siteId);
     final nextImported =
         _findImportedSiteBySourceId(widget.selectedSite?.importedSiteSourceId);
 
@@ -369,6 +365,12 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
       _selectedImportedSite = null;
       _selectedPoint = null;
       _moveToSite(nextRegistered);
+      return;
+    }
+
+    if (!useDefault && widget.selectedSite == null) {
+      _selectedSiteSnapshot = null;
+      _selectedImportedSite = null;
     }
   }
 
@@ -1128,7 +1130,7 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 50,
+                  height: 60,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: topChipItems.length,
@@ -1288,7 +1290,7 @@ class _MapDetailSheet extends StatelessWidget {
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 332),
+        constraints: const BoxConstraints(maxHeight: 356),
         decoration: BoxDecoration(
           color: const Color(0xFFFDFEFF).withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(24),
@@ -1372,53 +1374,38 @@ class _MapDetailSheet extends StatelessWidget {
                               text: errorText!,
                             ),
                           ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _MetricCard(
-                                label: '현재 온도',
-                                value: formatTemperature(
-                                  data.weather.temperatureCelsius,
-                                ),
-                                accentColor: const Color(0xFF2563EB),
-                              ),
+                        _MetricPair(
+                          leading: _MetricCard(
+                            label: '현재 온도',
+                            value: formatTemperature(
+                              data.weather.temperatureCelsius,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _MetricCard(
-                                label: '풍속',
-                                value: data.weather.windSpeedMps == null
-                                    ? '정보 준비 중'
-                                    : formatSpeedMps(
-                                        data.weather.windSpeedMps!),
-                                accentColor: const Color(0xFF0F8B8D),
-                              ),
-                            ),
-                          ],
+                            accentColor: const Color(0xFF2563EB),
+                          ),
+                          trailing: _MetricCard(
+                            label: '풍속',
+                            value: data.weather.windSpeedMps == null
+                                ? '정보 준비 중'
+                                : formatSpeedMps(data.weather.windSpeedMps!),
+                            accentColor: const Color(0xFF0F8B8D),
+                          ),
                         ),
                         const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _MetricCard(
-                                label: '풍향',
-                                value: data.weather.windDirection == null
-                                    ? '정보 준비 중'
-                                    : formatHeading(
-                                        data.weather.windDirection!.toDouble(),
-                                      ),
-                                accentColor: const Color(0xFF7C3AED),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _MetricCard(
-                                label: '요약 상태',
-                                value: data.weather.summary,
-                                accentColor: color,
-                              ),
-                            ),
-                          ],
+                        _MetricPair(
+                          leading: _MetricCard(
+                            label: '풍향',
+                            value: data.weather.windDirection == null
+                                ? '정보 준비 중'
+                                : formatHeading(
+                                    data.weather.windDirection!.toDouble(),
+                                  ),
+                            accentColor: const Color(0xFF7C3AED),
+                          ),
+                          trailing: _MetricCard(
+                            label: '요약 상태',
+                            value: data.weather.summary,
+                            accentColor: color,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -1430,7 +1417,7 @@ class _MapDetailSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         SizedBox(
-                          height: 132,
+                          height: 152,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: data.forecast.length,
@@ -1752,8 +1739,9 @@ class _MapChoiceChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          width: 140,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          width: 146,
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
@@ -1781,9 +1769,11 @@ class _MapChoiceChip extends StatelessWidget {
                 style: TextStyle(
                   color: foreground,
                   fontWeight: FontWeight.w800,
+                  fontSize: 14.5,
+                  height: 1.05,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 1),
               Text(
                 subtitle,
                 maxLines: 1,
@@ -1792,7 +1782,8 @@ class _MapChoiceChip extends StatelessWidget {
                   color: selected
                       ? Colors.white.withValues(alpha: 0.92)
                       : const Color(0xFF607080),
-                  fontSize: 11.5,
+                  fontSize: 10.5,
+                  height: 1.05,
                 ),
               ),
             ],
@@ -1817,7 +1808,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(11),
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
@@ -1828,12 +1819,14 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
                 ?.copyWith(color: const Color(0xFF52616B)),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 5),
           Text(
             value,
             maxLines: 1,
@@ -1849,6 +1842,36 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
+class _MetricPair extends StatelessWidget {
+  const _MetricPair({
+    required this.leading,
+    required this.trailing,
+  });
+
+  final Widget leading;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackCards = constraints.maxWidth < 320;
+        final cardWidth =
+            stackCards ? constraints.maxWidth : (constraints.maxWidth - 10) / 2;
+
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            SizedBox(width: cardWidth, child: leading),
+            SizedBox(width: cardWidth, child: trailing),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _ForecastChip extends StatelessWidget {
   const _ForecastChip({required this.item});
 
@@ -1858,7 +1881,7 @@ class _ForecastChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 110,
-      padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.80),
         borderRadius: BorderRadius.circular(16),
@@ -1875,16 +1898,18 @@ class _ForecastChip extends StatelessWidget {
                 .titleSmall
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             formatTemperature(item.temperatureCelsius),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             item.windSpeedMps == null
                 ? '풍속 정보 준비 중'
                 : formatSpeedMps(item.windSpeedMps!),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 2),
@@ -1894,18 +1919,19 @@ class _ForecastChip extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Expanded(
             child: Align(
               alignment: Alignment.bottomLeft,
               child: Text(
                 item.summaryText ?? '요약 준비 중',
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: const Color(0xFF607080)),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF607080),
+                      fontSize: 11,
+                      height: 1.15,
+                    ),
               ),
             ),
           ),
@@ -1999,13 +2025,16 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final labelWidth = screenWidth < 360 ? 82.0 : 96.0;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 96,
+            width: labelWidth,
             child: Text(
               label,
               style: Theme.of(context)
@@ -2014,7 +2043,7 @@ class _InfoRow extends StatelessWidget {
                   ?.copyWith(color: const Color(0xFF607080)),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,

@@ -6,7 +6,7 @@ void main() {
   group('TelemetryFilter', () {
     const filter = TelemetryFilter();
 
-    test('정지 상태의 작은 흔들림과 센서 속도 튐은 억제한다', () {
+    test('정지에 가까운 흔들림과 속도 튐은 방향 갱신에서 억제한다', () {
       final first = filter.filter(
         sessionId: 'session-1',
         position: _position(
@@ -43,7 +43,7 @@ void main() {
       expect(second.point.heading, first.point.heading);
     });
 
-    test('의미 있는 이동은 거리와 속도를 유지한다', () {
+    test('의미 있는 이동은 거리와 속도를 반영해 추적한다', () {
       final first = filter.filter(
         sessionId: 'session-2',
         position: _position(
@@ -78,6 +78,39 @@ void main() {
       expect(second.point.heading, isNotNull);
       expect(second.point.latitude, isNot(first.point.latitude));
       expect(second.point.longitude, isNot(first.point.longitude));
+    });
+
+    test('최근 이동 경로가 분명하면 센서 heading보다 진행 방향을 우선한다', () {
+      final first = filter.filter(
+        sessionId: 'session-route-priority',
+        position: _position(
+          latitude: 36.58000,
+          longitude: 128.18000,
+          altitude: 320,
+          accuracy: 8,
+          speed: 0,
+          heading: 0,
+          timestamp: DateTime(2026, 4, 1, 11, 30, 0),
+        ),
+        existingPoints: const [],
+      )!;
+
+      final second = filter.filter(
+        sessionId: 'session-route-priority',
+        position: _position(
+          latitude: 36.58055,
+          longitude: 128.18003,
+          altitude: 338,
+          accuracy: 7,
+          speed: 8.4,
+          heading: 190,
+          timestamp: DateTime(2026, 4, 1, 11, 30, 5),
+        ),
+        existingPoints: [first.point],
+      )!;
+
+      expect(second.point.heading, isNotNull);
+      expect(second.point.heading!, lessThan(60));
     });
 
     test('북쪽 경계 근처 heading 변화는 자연스럽게 연결한다', () {
@@ -155,6 +188,7 @@ Position _position({
   required double accuracy,
   required double speed,
   required double heading,
+  double headingAccuracy = 6,
   required DateTime timestamp,
 }) {
   return Position(
@@ -165,7 +199,7 @@ Position _position({
     altitude: altitude,
     altitudeAccuracy: 3,
     heading: heading,
-    headingAccuracy: 6,
+    headingAccuracy: headingAccuracy,
     speed: speed,
     speedAccuracy: 1,
   );

@@ -625,7 +625,7 @@ class _FlightAnalysisReplaySectionState
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -637,9 +637,9 @@ class _FlightAnalysisReplaySectionState
                   ? '지형과 고도 흐름을 함께 보며 실제 비행 경로를 더 입체적으로 복기해 보세요.'
                   : '핵심 시점과 경로를 빠르게 훑어보며 비행 흐름을 부드럽게 정리해 보세요.',
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             _buildEmbeddedReplayToolbar(context),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             _buildEmbeddedReplaySummaryRow(
               context,
               startTimeText: formatTime(startedAt),
@@ -656,12 +656,12 @@ class _FlightAnalysisReplaySectionState
               highestSpeedHint:
                   formatTime(fastestPoint?.timestamp ?? startedAt),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF4F7F8),
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(
                   color: Theme.of(context).dividerColor.withValues(alpha: 0.24),
                 ),
@@ -682,7 +682,7 @@ class _FlightAnalysisReplaySectionState
                       compact: true,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   if (_viewMode == FlightAnalysisViewMode.twoD)
                     _buildTwoDView(context)
                   else
@@ -703,7 +703,7 @@ class _FlightAnalysisReplaySectionState
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         padding: WidgetStateProperty.all(
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ),
       segments: const [
@@ -732,9 +732,9 @@ class _FlightAnalysisReplaySectionState
       style: FilledButton.styleFrom(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
       ),
       icon: const Icon(Icons.fullscreen_rounded, size: 18),
@@ -743,14 +743,14 @@ class _FlightAnalysisReplaySectionState
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+        spacing: 8,
+        runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           segmentedButton,
@@ -794,16 +794,16 @@ class _FlightAnalysisReplaySectionState
             children: [
               for (var index = 0; index < cards.length; index++) ...[
                 Expanded(child: cards[index]),
-                if (index != cards.length - 1) const SizedBox(width: 12),
+                if (index != cards.length - 1) const SizedBox(width: 8),
               ],
             ],
           );
         }
 
-        final itemWidth = (constraints.maxWidth - 10) / 2;
+        final itemWidth = (constraints.maxWidth - 8) / 2;
         return Wrap(
-          spacing: 10,
-          runSpacing: 10,
+          spacing: 8,
+          runSpacing: 8,
           children: [
             SizedBox(width: itemWidth, child: cards[0]),
             SizedBox(width: itemWidth, child: cards[1]),
@@ -897,147 +897,181 @@ class _FlightAnalysisReplaySectionState
     return ColoredBox(
       color: const Color(0xFF09131B),
       child: SafeArea(
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: _buildFullscreenMapContent(
-                context,
-                currentFrame: currentFrame,
-                effectiveCameraMode: effectiveCameraMode,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: _buildFullscreenMapContent(
+                  context,
+                  currentFrame: currentFrame,
+                  effectiveCameraMode: effectiveCameraMode,
+                ),
               ),
-            ),
-            Positioned(
-              top: 12,
-              left: 12,
-              right: 12,
-              child: _FullscreenReplayTopChrome(
-                viewMode: _viewMode,
-                hasThreeDEntryReady: _hasThreeDEntryReady,
-                currentTimeText: formatTime(currentFrame.timestamp),
-                totalDurationText: formatDuration(_replayData.totalDuration),
-                currentAltitudeText:
-                    formatAltitudeMeters(currentFrame.altitudeMeters),
-                highestAltitudeText:
-                    formatAltitudeMeters(highestFrame.altitudeMeters),
-                onClose: widget.onCloseFullscreen ??
-                    () => Navigator.maybePop(context),
-                onExport: _showExportOptions,
-                onModeChanged: (mode) => _setViewMode(mode),
-              ),
-            ),
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: _secondaryPanelExpanded
-                        ? Padding(
-                            key: const ValueKey('replay-secondary'),
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _FullscreenReplaySecondaryPanel(
-                              autoCameraEnabled: _autoCameraEnabled,
-                              autoCameraStageLabel: autoCameraStageLabel,
-                              cameraMode: effectiveCameraMode,
-                              onAutoCameraChanged: (selected) {
-                                setState(() {
-                                  _autoCameraEnabled = selected;
-                                });
-                              },
-                              onCameraModeChanged: (mode) {
-                                setState(() {
-                                  _autoCameraEnabled = false;
-                                  _cameraMode = mode;
-                                });
-                              },
-                              selectedSegmentLabel: _selectedSegment?.label,
-                              takeoffSegment: _takeoffSegment,
-                              landingSegment: _landingSegment,
-                              thermalSegments: _replayData.thermalSegments,
-                              onSelectFull: () => _selectSegment(null),
-                              onSelectSegment: _selectSegment,
-                              insightPanel: _ReplayInsightPanel(
-                                segmentLabel: _segmentStateLabel(
-                                    currentFrame.verticalSpeedMps),
-                                altitudeDeltaText: _signedAltitudeText(
-                                  currentFrame.altitudeFromStartMeters,
-                                ),
-                                peakGapText: (highestFrame
-                                                    .displayAltitudeMeters -
+              Positioned.fill(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _FullscreenReplayTopChrome(
+                      viewMode: _viewMode,
+                      hasThreeDEntryReady: _hasThreeDEntryReady,
+                      currentTimeText: formatTime(currentFrame.timestamp),
+                      totalDurationText:
+                          formatDuration(_replayData.totalDuration),
+                      currentAltitudeText:
+                          formatAltitudeMeters(currentFrame.altitudeMeters),
+                      highestAltitudeText:
+                          formatAltitudeMeters(highestFrame.altitudeMeters),
+                      onClose: widget.onCloseFullscreen ??
+                          () => Navigator.maybePop(context),
+                      onExport: _showExportOptions,
+                      onModeChanged: (mode) => _setViewMode(mode),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                child: _secondaryPanelExpanded
+                                    ? ConstrainedBox(
+                                        key: const ValueKey('replay-secondary'),
+                                        constraints: BoxConstraints(
+                                          maxHeight: constraints.maxHeight,
+                                        ),
+                                        child: SingleChildScrollView(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 10),
+                                          child:
+                                              _FullscreenReplaySecondaryPanel(
+                                            autoCameraEnabled:
+                                                _autoCameraEnabled,
+                                            autoCameraStageLabel:
+                                                autoCameraStageLabel,
+                                            cameraMode: effectiveCameraMode,
+                                            onAutoCameraChanged: (selected) {
+                                              setState(() {
+                                                _autoCameraEnabled = selected;
+                                              });
+                                            },
+                                            onCameraModeChanged: (mode) {
+                                              setState(() {
+                                                _autoCameraEnabled = false;
+                                                _cameraMode = mode;
+                                              });
+                                            },
+                                            selectedSegmentLabel:
+                                                _selectedSegment?.label,
+                                            takeoffSegment: _takeoffSegment,
+                                            landingSegment: _landingSegment,
+                                            thermalSegments:
+                                                _replayData.thermalSegments,
+                                            onSelectFull: () =>
+                                                _selectSegment(null),
+                                            onSelectSegment: _selectSegment,
+                                            insightPanel: _ReplayInsightPanel(
+                                              segmentLabel: _segmentStateLabel(
+                                                currentFrame.verticalSpeedMps,
+                                              ),
+                                              altitudeDeltaText:
+                                                  _signedAltitudeText(
                                                 currentFrame
-                                                    .displayAltitudeMeters)
-                                            .abs() <=
-                                        6
-                                    ? '최고 고도 지점'
-                                    : '${formatAltitudeMeters((highestFrame.displayAltitudeMeters - currentFrame.displayAltitudeMeters).abs())} 차이',
-                                elapsedText: formatDuration(
-                                    currentFrame.elapsedDuration),
-                                thermalLabel:
-                                    _currentThermalSegment?.label ?? '써멀 추정 없음',
-                                speedText:
-                                    formatSpeedKmh(currentFrame.speedMps),
-                                distanceText: formatDistanceMeters(
-                                  currentFrame.cumulativeDistanceMeters,
-                                ),
-                                verticalSpeedText: formatVerticalSpeed(
-                                  currentFrame.verticalSpeedMps,
-                                ),
+                                                    .altitudeFromStartMeters,
+                                              ),
+                                              peakGapText: (highestFrame
+                                                                  .displayAltitudeMeters -
+                                                              currentFrame
+                                                                  .displayAltitudeMeters)
+                                                          .abs() <=
+                                                      6
+                                                  ? '최고 고도 지점'
+                                                  : '${formatAltitudeMeters((highestFrame.displayAltitudeMeters - currentFrame.displayAltitudeMeters).abs())} 차이',
+                                              elapsedText: formatDuration(
+                                                currentFrame.elapsedDuration,
+                                              ),
+                                              thermalLabel:
+                                                  _currentThermalSegment
+                                                          ?.label ??
+                                                      '써멀 추정 없음',
+                                              speedText: formatSpeedKmh(
+                                                currentFrame.speedMps,
+                                              ),
+                                              distanceText:
+                                                  formatDistanceMeters(
+                                                currentFrame
+                                                    .cumulativeDistanceMeters,
+                                              ),
+                                              verticalSpeedText:
+                                                  formatVerticalSpeed(
+                                                currentFrame.verticalSpeedMps,
+                                              ),
+                                            ),
+                                            altitudeProfile:
+                                                _ReplayAltitudeProfile(
+                                              replayData: _replayData,
+                                              currentIndex: _safeReplayIndex,
+                                              rangeStartIndex:
+                                                  _selectedRangeStart,
+                                              rangeEndIndex: _selectedRangeEnd,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(
+                                        key: ValueKey(
+                                          'replay-secondary-empty',
+                                        ),
+                                      ),
                               ),
-                              altitudeProfile: _ReplayAltitudeProfile(
-                                replayData: _replayData,
-                                currentIndex: _safeReplayIndex,
-                                rangeStartIndex: _selectedRangeStart,
-                                rangeEndIndex: _selectedRangeEnd,
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(
-                            key: ValueKey('replay-secondary-empty'),
-                          ),
-                  ),
-                  _FullscreenReplayControlCard(
-                    isPlaying: _isPlaying,
-                    progress: _selectedSegmentProgress,
-                    playbackSpeed: _playbackSpeed,
-                    selectedRangeLabel: _selectedSegment?.label ?? '전체 경로',
-                    elapsedText: formatDuration(currentFrame.elapsedDuration),
-                    durationText: formatDuration(_selectedRangeDuration),
-                    progressText:
-                        '${(_selectedSegmentProgress * 100).round()}%',
-                    secondaryExpanded: _secondaryPanelExpanded,
-                    onPlayPause: _togglePlayback,
-                    onReset: () {
-                      _seekToIndex(_selectedRangeStart);
-                      setState(() {
-                        _autoCameraEnabled = true;
-                        _cameraMode = FlightReplayCameraMode.overview;
-                      });
-                    },
-                    onProgressChanged: (value) {
-                      _seekToProgress(value);
-                    },
-                    onSpeedChanged: (value) {
-                      final wasPlaying = _isPlaying;
-                      _playbackTimer?.cancel();
-                      _lastPlaybackTickAt = null;
-                      setState(() {
-                        _playbackSpeed = value;
-                      });
-                      if (wasPlaying) {
-                        _togglePlayback();
-                      }
-                    },
-                    onToggleSecondary: _toggleSecondaryPanel,
-                  ),
-                ],
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    _FullscreenReplayControlCard(
+                      isPlaying: _isPlaying,
+                      progress: _selectedSegmentProgress,
+                      playbackSpeed: _playbackSpeed,
+                      selectedRangeLabel: _selectedSegment?.label ?? '전체 경로',
+                      elapsedText: formatDuration(currentFrame.elapsedDuration),
+                      durationText: formatDuration(_selectedRangeDuration),
+                      progressText:
+                          '${(_selectedSegmentProgress * 100).round()}%',
+                      secondaryExpanded: _secondaryPanelExpanded,
+                      onPlayPause: _togglePlayback,
+                      onReset: () {
+                        _seekToIndex(_selectedRangeStart);
+                        setState(() {
+                          _autoCameraEnabled = true;
+                          _cameraMode = FlightReplayCameraMode.overview;
+                        });
+                      },
+                      onProgressChanged: (value) {
+                        _seekToProgress(value);
+                      },
+                      onSpeedChanged: (value) {
+                        final wasPlaying = _isPlaying;
+                        _playbackTimer?.cancel();
+                        _lastPlaybackTickAt = null;
+                        setState(() {
+                          _playbackSpeed = value;
+                        });
+                        if (wasPlaying) {
+                          _togglePlayback();
+                        }
+                      },
+                      onToggleSecondary: _toggleSecondaryPanel,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1513,11 +1547,11 @@ class _FullscreenReplayTopChrome extends StatelessWidget {
               tooltip: '전체화면 종료',
               onPressed: onClose,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: _ReplayGlassPanel(
-                borderRadius: 18,
-                padding: const EdgeInsets.all(4),
+                borderRadius: 16,
+                padding: const EdgeInsets.all(3),
                 child: SegmentedButton<FlightAnalysisViewMode>(
                   showSelectedIcon: false,
                   style: ButtonStyle(
@@ -1533,8 +1567,8 @@ class _FullscreenReplayTopChrome extends StatelessWidget {
                     ),
                     padding: WidgetStateProperty.all(
                       const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                        horizontal: 10,
+                        vertical: 8,
                       ),
                     ),
                     visualDensity: VisualDensity.compact,
@@ -1564,7 +1598,7 @@ class _FullscreenReplayTopChrome extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             _FullscreenOverlayIconButton(
               icon: Icons.ios_share_rounded,
               tooltip: '리플레이 내보내기',
@@ -1572,13 +1606,13 @@ class _FullscreenReplayTopChrome extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _ReplayGlassPanel(
-          borderRadius: 18,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          borderRadius: 16,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Wrap(
-            spacing: 10,
-            runSpacing: 8,
+            spacing: 8,
+            runSpacing: 6,
             children: [
               _FullscreenReplayStat(label: '현재 재생 시각', value: currentTimeText),
               _FullscreenReplayStat(label: '총 비행 시간', value: totalDurationText),
@@ -1604,10 +1638,10 @@ class _FullscreenReplayStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
@@ -1626,6 +1660,7 @@ class _FullscreenReplayStat extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
+                  height: 1.0,
                 ),
           ),
         ],
@@ -1650,17 +1685,17 @@ class _FullscreenOverlayIconButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: _ReplayGlassPanel(
-        borderRadius: 18,
+        borderRadius: 16,
         padding: EdgeInsets.zero,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onPressed,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Icon(icon, color: Colors.white, size: 20),
+              width: 40,
+              height: 40,
+              child: Icon(icon, color: Colors.white, size: 18),
             ),
           ),
         ),
@@ -2635,7 +2670,7 @@ class _EmbeddedReplayHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color:
                 Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
@@ -2649,22 +2684,22 @@ class _EmbeddedReplayHeader extends StatelessWidget {
                 ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                height: 1.12,
+                height: 1.08,
               ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
             description,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  height: 1.5,
+                  height: 1.42,
                 ),
           ),
         ),
@@ -2696,11 +2731,11 @@ class _EmbeddedReplaySummaryCard extends StatelessWidget {
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 92),
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      constraints: const BoxConstraints(minHeight: 78),
+      padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         border: emphasized
             ? null
             : Border.all(
@@ -2710,8 +2745,8 @@ class _EmbeddedReplaySummaryCard extends StatelessWidget {
             ? [
                 BoxShadow(
                   color: const Color(0xFF264653).withValues(alpha: 0.16),
-                  blurRadius: 18,
-                  offset: const Offset(0, 10),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
                 ),
               ]
             : null,
@@ -2724,28 +2759,28 @@ class _EmbeddedReplaySummaryCard extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: secondaryColor,
                   fontWeight: FontWeight.w700,
                 ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: foregroundColor,
                   fontWeight: FontWeight.w800,
                   height: 1.0,
                 ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             hint,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: secondaryColor,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2798,7 +2833,7 @@ class _ReplayPreviewModuleHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               textColumn,
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: trailing,
@@ -2811,7 +2846,7 @@ class _ReplayPreviewModuleHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: textColumn),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             trailing,
           ],
         );

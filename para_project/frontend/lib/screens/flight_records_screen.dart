@@ -107,6 +107,62 @@ class _FlightRecordsScreenState extends State<FlightRecordsScreen> {
     }
   }
 
+  Future<void> _confirmDeleteSession(FlightSession session) async {
+    final linkedPost = widget.communityManager.findPostBySessionId(session.id);
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('비행 기록 삭제'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('이 기록을 삭제하시겠습니까?'),
+                const SizedBox(height: 8),
+                const Text('삭제 후에는 되돌릴 수 없습니다.'),
+                if (linkedPost != null) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    '이미 작성한 비행일지는 유지되고, 연결된 비행 기록만 삭제됩니다.',
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('삭제'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) {
+      return;
+    }
+
+    final deleted = await widget.flightRecordManager.deleteSession(session.id);
+    if (!mounted) {
+      return;
+    }
+
+    final message = deleted
+        ? '비행 기록이 삭제되었습니다.'
+        : (widget.flightRecordManager.errorMessage ?? '비행 기록을 삭제하지 못했습니다.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Future<void> _stopRecording() async {
     final controller = TextEditingController();
     final memo = await showDialog<String>(
@@ -514,7 +570,29 @@ class _FlightRecordsScreenState extends State<FlightRecordsScreen> {
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
                     contentPadding: const EdgeInsets.all(16),
-                    title: Text(session.displaySiteName),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          session.displaySiteName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '비행 시작 ${formatTime(session.startedAt)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                      ],
+                    ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Column(
@@ -522,6 +600,8 @@ class _FlightRecordsScreenState extends State<FlightRecordsScreen> {
                         children: [
                           Text(
                             '${formatDate(session.startedAt)} · ${session.displayRegion}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -592,6 +672,7 @@ class _FlightRecordsScreenState extends State<FlightRecordsScreen> {
                             FlightRecordDetailArgs(sessionId: session.id),
                       );
                     },
+                    onLongPress: () => _confirmDeleteSession(session),
                   ),
                 ),
               ),

@@ -1,5 +1,7 @@
 enum PilotLevel { beginner, intermediate, advanced }
 
+DateTime _parseStoredDateTime(String value) => DateTime.parse(value).toLocal();
+
 extension PilotLevelLabel on PilotLevel {
   String get value => switch (this) {
         PilotLevel.beginner => 'beginner',
@@ -422,7 +424,7 @@ class FlightTrackPoint {
       FlightTrackPoint(
         id: json['id'] as String,
         sessionId: json['session_id'] as String,
-        timestamp: DateTime.parse(json['timestamp'] as String),
+        timestamp: _parseStoredDateTime(json['timestamp'] as String),
         latitude: (json['latitude'] as num).toDouble(),
         longitude: (json['longitude'] as num).toDouble(),
         altitude: (json['altitude'] as num).toDouble(),
@@ -563,10 +565,10 @@ class FlightSession {
   factory FlightSession.fromJson(Map<String, dynamic> json) => FlightSession(
         id: json['id'] as String,
         userId: json['user_id'] as int,
-        startedAt: DateTime.parse(json['started_at'] as String),
+        startedAt: _parseStoredDateTime(json['started_at'] as String),
         endedAt: json['ended_at'] == null
             ? null
-            : DateTime.parse(json['ended_at'] as String),
+            : _parseStoredDateTime(json['ended_at'] as String),
         status: FlightSessionStatusLabel.fromString(json['status'] as String),
         siteId: json['site_id'] as int?,
         siteName: (json['site_name'] as String?) ?? '',
@@ -584,12 +586,12 @@ class FlightSession {
         pausedDurationSeconds: (json['paused_duration_seconds'] as int?) ?? 0,
         pausedAt: json['paused_at'] == null
             ? null
-            : DateTime.parse(json['paused_at'] as String),
+            : _parseStoredDateTime(json['paused_at'] as String),
         lastLatitude: (json['last_latitude'] as num?)?.toDouble(),
         lastLongitude: (json['last_longitude'] as num?)?.toDouble(),
         lastAccuracyMeters: (json['last_accuracy_meters'] as num?)?.toDouble(),
-        createdAt: DateTime.parse(json['created_at'] as String),
-        updatedAt: DateTime.parse(json['updated_at'] as String),
+        createdAt: _parseStoredDateTime(json['created_at'] as String),
+        updatedAt: _parseStoredDateTime(json['updated_at'] as String),
       );
 
   Map<String, dynamic> toJson() => {

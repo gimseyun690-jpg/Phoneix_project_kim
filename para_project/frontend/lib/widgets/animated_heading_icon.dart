@@ -98,15 +98,18 @@ class _AnimatedHeadingIconState extends State<AnimatedHeadingIcon>
 
   Duration _durationForDelta(double delta) {
     if (delta >= 120) {
-      return const Duration(milliseconds: 520);
-    }
-    if (delta >= 60) {
       return const Duration(milliseconds: 460);
     }
-    if (delta >= 24) {
-      return const Duration(milliseconds: 380);
+    if (delta >= 60) {
+      return const Duration(milliseconds: 360);
     }
-    return const Duration(milliseconds: 300);
+    if (delta >= 24) {
+      return const Duration(milliseconds: 260);
+    }
+    if (delta >= 10) {
+      return const Duration(milliseconds: 220);
+    }
+    return const Duration(milliseconds: 180);
   }
 
   double _normalize(double value) {

@@ -4,7 +4,7 @@ import 'package:paragliding_mvp_frontend/models/app_models.dart';
 
 void main() {
   group('실시간 비행 지표 계산', () {
-    test('일시정지 상태에서는 저장된 경과 시간이 유지된다', () {
+    test('일시 정지 상태에서는 저장된 경과 시간을 유지한다', () {
       final startedAt = DateTime(2026, 4, 1, 9, 0);
       final session = FlightSession(
         id: 'paused-session',
@@ -13,7 +13,7 @@ void main() {
         endedAt: null,
         status: FlightSessionStatus.paused,
         siteId: 1,
-        siteName: '문경 활공랜드',
+        siteName: '문경 이륙장',
         region: '경북 문경',
         durationSeconds: 1800,
         totalDistanceMeters: 5400,
@@ -41,7 +41,7 @@ void main() {
       expect(metrics.elapsed, const Duration(minutes: 30));
     });
 
-    test('기록 중 상태에서는 누적 일시정지 시간을 제외하고 경과 시간을 계산한다', () {
+    test('기록 중 상태에서는 누적 일시 정지 시간을 빼고 경과 시간을 계산한다', () {
       final startedAt = DateTime(2026, 4, 1, 9, 0);
       final session = FlightSession(
         id: 'recording-session',
@@ -50,7 +50,7 @@ void main() {
         endedAt: null,
         status: FlightSessionStatus.recording,
         siteId: 1,
-        siteName: '문경 활공랜드',
+        siteName: '문경 이륙장',
         region: '경북 문경',
         durationSeconds: 0,
         totalDistanceMeters: 6400,
@@ -87,7 +87,7 @@ void main() {
         endedAt: null,
         status: FlightSessionStatus.recording,
         siteId: 1,
-        siteName: '문경 활공랜드',
+        siteName: '문경 이륙장',
         region: '경북 문경',
         durationSeconds: 0,
         totalDistanceMeters: 2400,
@@ -162,6 +162,91 @@ void main() {
       expect(metrics.headingDegrees, isNotNull);
       final heading = metrics.headingDegrees!;
       expect(heading <= 20 || heading >= 340, isTrue);
+    });
+
+    test('최근 이동 경로가 분명하면 진행 방향을 더 신뢰한다', () {
+      final startedAt = DateTime(2026, 4, 1, 14, 0);
+      final session = FlightSession(
+        id: 'route-heading-session',
+        userId: 1,
+        startedAt: startedAt,
+        endedAt: null,
+        status: FlightSessionStatus.recording,
+        siteId: 1,
+        siteName: '문경 이륙장',
+        region: '경북 문경',
+        durationSeconds: 0,
+        totalDistanceMeters: 2400,
+        minAltitudeMeters: 240,
+        maxAltitudeMeters: 920,
+        avgSpeedMps: 4.1,
+        maxSpeedMps: 9.3,
+        memo: '',
+        trackPointCount: 4,
+        pausedDurationSeconds: 0,
+        pausedAt: null,
+        lastLatitude: 36.58,
+        lastLongitude: 128.18,
+        lastAccuracyMeters: 8,
+        createdAt: startedAt,
+        updatedAt: DateTime(2026, 4, 1, 14, 0, 18),
+      );
+
+      final points = [
+        FlightTrackPoint(
+          id: 'p1',
+          sessionId: session.id,
+          timestamp: DateTime(2026, 4, 1, 14, 0, 0),
+          latitude: 36.5800,
+          longitude: 128.1800,
+          altitude: 280,
+          speed: 7.2,
+          heading: 182,
+          accuracy: 8,
+        ),
+        FlightTrackPoint(
+          id: 'p2',
+          sessionId: session.id,
+          timestamp: DateTime(2026, 4, 1, 14, 0, 6),
+          latitude: 36.5804,
+          longitude: 128.1801,
+          altitude: 340,
+          speed: 7.5,
+          heading: 194,
+          accuracy: 7,
+        ),
+        FlightTrackPoint(
+          id: 'p3',
+          sessionId: session.id,
+          timestamp: DateTime(2026, 4, 1, 14, 0, 12),
+          latitude: 36.5809,
+          longitude: 128.1802,
+          altitude: 410,
+          speed: 7.8,
+          heading: 188,
+          accuracy: 7,
+        ),
+        FlightTrackPoint(
+          id: 'p4',
+          sessionId: session.id,
+          timestamp: DateTime(2026, 4, 1, 14, 0, 18),
+          latitude: 36.5815,
+          longitude: 128.1803,
+          altitude: 470,
+          speed: 8.0,
+          heading: 200,
+          accuracy: 7,
+        ),
+      ];
+
+      final metrics = FlightLiveMetrics.fromSession(
+        session: session,
+        points: points,
+        now: DateTime(2026, 4, 1, 14, 0, 18),
+      );
+
+      expect(metrics.headingDegrees, isNotNull);
+      expect(metrics.headingDegrees!, lessThan(40));
     });
   });
 }

@@ -17,16 +17,20 @@ class FilteredTelemetrySample {
 class TelemetryFilter {
   const TelemetryFilter();
 
+  DateTime _normalizeTimestamp(DateTime timestamp) =>
+      timestamp.isUtc ? timestamp.toLocal() : timestamp;
+
   FilteredTelemetrySample? filter({
     required String sessionId,
     required Position position,
     required List<FlightTrackPoint> existingPoints,
   }) {
+    final timestamp = _normalizeTimestamp(position.timestamp);
     if (existingPoints.isEmpty) {
       final point = FlightTrackPoint(
-        id: '${sessionId}_${position.timestamp.microsecondsSinceEpoch}',
+        id: '${sessionId}_${timestamp.microsecondsSinceEpoch}',
         sessionId: sessionId,
-        timestamp: position.timestamp,
+        timestamp: timestamp,
         latitude: position.latitude,
         longitude: position.longitude,
         altitude: position.altitude,
@@ -39,7 +43,7 @@ class TelemetryFilter {
 
     final previous = existingPoints.last;
     final elapsedSeconds =
-        position.timestamp.difference(previous.timestamp).inMilliseconds / 1000;
+        timestamp.difference(previous.timestamp).inMilliseconds / 1000;
     if (elapsedSeconds <= 0) {
       return null;
     }
@@ -99,9 +103,13 @@ class TelemetryFilter {
 
     final normalizedHeading = _normalizeHeading(
       previous: previous,
+      existingPoints: existingPoints,
       latitude: latitude,
       longitude: longitude,
+      timestamp: timestamp,
       sensorHeading: position.heading >= 0 ? position.heading : null,
+      sensorHeadingAccuracyDegrees:
+          position.headingAccuracy >= 0 ? position.headingAccuracy : null,
       speed: filteredSpeed,
       accuracyMeters: accuracy,
       movedMeters: rawDistance,
@@ -124,9 +132,9 @@ class TelemetryFilter {
     }
 
     final point = FlightTrackPoint(
-      id: '${sessionId}_${position.timestamp.microsecondsSinceEpoch}',
+      id: '${sessionId}_${timestamp.microsecondsSinceEpoch}',
       sessionId: sessionId,
-      timestamp: position.timestamp,
+      timestamp: timestamp,
       latitude: latitude,
       longitude: longitude,
       altitude: altitude,
@@ -143,36 +151,40 @@ class TelemetryFilter {
 
   double? _normalizeHeading({
     required FlightTrackPoint previous,
+    required List<FlightTrackPoint> existingPoints,
     required double latitude,
     required double longitude,
+    required DateTime timestamp,
     required double? sensorHeading,
+    required double? sensorHeadingAccuracyDegrees,
     required double speed,
     required double? accuracyMeters,
     required double movedMeters,
   }) {
-    if (speed < 2.2) {
+    if (speed < 1.8) {
       return previous.heading;
     }
 
     final effectiveAccuracy = accuracyMeters ?? previous.accuracy ?? 12;
-    final movementThreshold = max(4.5, effectiveAccuracy * 0.40);
+    final movementThreshold = max(4.0, effectiveAccuracy * 0.36);
     if (movedMeters < movementThreshold && speed < 3.4) {
       return previous.heading;
     }
 
-    final derivedHeading = movedMeters >= movementThreshold
-        ? Geolocator.bearingBetween(
-            previous.latitude,
-            previous.longitude,
-            latitude,
-            longitude,
-          )
-        : null;
+    final derivedHeading = _estimateRouteHeading(
+      existingPoints: existingPoints,
+      currentLatitude: latitude,
+      currentLongitude: longitude,
+      currentTimestamp: timestamp,
+      minimumMovementMeters: movementThreshold,
+    );
     final candidate = _resolveHeadingCandidate(
       sensorHeading: sensorHeading,
+      sensorHeadingAccuracyDegrees: sensorHeadingAccuracyDegrees,
       derivedHeading: derivedHeading,
       speed: speed,
       accuracyMeters: effectiveAccuracy,
+      movedMeters: movedMeters,
     );
     if (candidate == null) {
       return previous.heading;
@@ -184,44 +196,56 @@ class TelemetryFilter {
     }
 
     final delta = _headingDelta(previousHeading, candidate).abs();
-    if (delta < 2.5) {
+    if (delta < 1.8) {
       return previousHeading;
     }
-    if (delta < 12) {
-      return _blendHeading(previousHeading, candidate, 0.30);
+    if (delta < 8 && speed < 4.5) {
+      return previousHeading;
     }
-    if (delta > 110 && speed < 4.8) {
+    if (delta < 16) {
+      return _blendHeading(previousHeading, candidate, 0.42);
+    }
+    if (delta > 115 && speed < 6.5) {
       return previousHeading;
     }
     if (effectiveAccuracy > 28 && delta > 28 && speed < 8) {
       return previousHeading;
     }
+    if (movedMeters < movementThreshold * 0.9 && speed < 4.8) {
+      return previousHeading;
+    }
 
     double smoothing = switch (speed) {
-      >= 12 => 0.60,
-      >= 8 => 0.46,
-      >= 4.5 => 0.34,
-      _ => 0.24,
+      >= 14 => 0.72,
+      >= 10 => 0.58,
+      >= 6 => 0.46,
+      >= 3.2 => 0.34,
+      _ => 0.26,
     };
     if (effectiveAccuracy > 18) {
       smoothing -= 0.08;
     }
-    if (delta > 70 && speed < 7) {
-      smoothing = min(smoothing, 0.24);
+    if (delta > 75 && speed < 8) {
+      smoothing = min(smoothing, 0.28);
+    }
+    if (movedMeters > movementThreshold * 2.2 && speed >= 8) {
+      smoothing += 0.04;
     }
 
     return _blendHeading(
       previousHeading,
       candidate,
-      smoothing.clamp(0.18, 0.60),
+      smoothing.clamp(0.20, 0.74),
     );
   }
 
   double? _resolveHeadingCandidate({
     required double? sensorHeading,
+    required double? sensorHeadingAccuracyDegrees,
     required double? derivedHeading,
     required double speed,
     required double accuracyMeters,
+    required double movedMeters,
   }) {
     final normalizedSensor = sensorHeading == null || !sensorHeading.isFinite
         ? null
@@ -229,19 +253,43 @@ class TelemetryFilter {
     final normalizedDerived = derivedHeading == null || !derivedHeading.isFinite
         ? null
         : _wrapHeading(derivedHeading);
+    final sensorTrust = _sensorHeadingTrust(
+      speed: speed,
+      accuracyMeters: accuracyMeters,
+      movedMeters: movedMeters,
+      headingAccuracyDegrees: sensorHeadingAccuracyDegrees,
+    );
 
     if (normalizedSensor != null && normalizedDerived != null) {
       final gap = _headingDelta(normalizedDerived, normalizedSensor).abs();
-      if (gap <= 14) {
-        return _blendHeading(normalizedDerived, normalizedSensor, 0.42);
+      if (gap <= 10) {
+        return _blendHeading(
+          normalizedDerived,
+          normalizedSensor,
+          sensorTrust.clamp(0.20, 0.48),
+        );
       }
-      if (gap <= 40 && speed >= 9 && accuracyMeters <= 18) {
-        return _blendHeading(normalizedDerived, normalizedSensor, 0.26);
+      if (gap <= 24 && sensorTrust >= 0.34) {
+        return _blendHeading(
+          normalizedDerived,
+          normalizedSensor,
+          sensorTrust.clamp(0.18, 0.42),
+        );
+      }
+      if (gap <= 42 && sensorTrust >= 0.58 && speed >= 10) {
+        return normalizedSensor;
       }
       return normalizedDerived;
     }
 
-    return normalizedDerived ?? normalizedSensor;
+    if (normalizedDerived != null) {
+      return normalizedDerived;
+    }
+    if (normalizedSensor != null && sensorTrust >= 0.42) {
+      return normalizedSensor;
+    }
+
+    return null;
   }
 
   double _blendHeading(double from, double to, double factor) {
@@ -266,6 +314,138 @@ class TelemetryFilter {
     }
 
     return (previousAltitude * 0.35) + (rawAltitude * 0.65);
+  }
+
+  double? _estimateRouteHeading({
+    required List<FlightTrackPoint> existingPoints,
+    required double currentLatitude,
+    required double currentLongitude,
+    required DateTime currentTimestamp,
+    required double minimumMovementMeters,
+  }) {
+    final window = existingPoints.length <= 6
+        ? List<FlightTrackPoint>.from(existingPoints)
+        : existingPoints.sublist(existingPoints.length - 6);
+    if (window.isEmpty) {
+      return null;
+    }
+
+    final currentPoint = FlightTrackPoint(
+      id: 'derived-current',
+      sessionId: window.last.sessionId,
+      timestamp: currentTimestamp,
+      latitude: currentLatitude,
+      longitude: currentLongitude,
+      altitude: window.last.altitude,
+      speed: window.last.speed,
+      heading: window.last.heading,
+      accuracy: window.last.accuracy,
+    );
+    final samples = [...window, currentPoint];
+
+    double sinSum = 0;
+    double cosSum = 0;
+    double weightSum = 0;
+    FlightTrackPoint? earliestSignificantPoint;
+    for (var index = 1; index < samples.length; index++) {
+      final from = samples[index - 1];
+      final to = samples[index];
+      final movedMeters = Geolocator.distanceBetween(
+        from.latitude,
+        from.longitude,
+        to.latitude,
+        to.longitude,
+      );
+      if (movedMeters < max(3.2, minimumMovementMeters * 0.68)) {
+        continue;
+      }
+
+      final seconds = max(
+        1,
+        to.timestamp.difference(from.timestamp).inMilliseconds,
+      );
+      final speedMps = movedMeters / (seconds / 1000);
+      final bearing = Geolocator.bearingBetween(
+        from.latitude,
+        from.longitude,
+        to.latitude,
+        to.longitude,
+      );
+      final ageSeconds =
+          max(0, currentTimestamp.difference(to.timestamp).inSeconds)
+              .toDouble();
+      final recencyWeight = 1 / (1 + (ageSeconds / 5.0));
+      final distanceWeight = (movedMeters / 14.0).clamp(0.35, 1.7).toDouble();
+      final speedWeight = (speedMps / 7.5).clamp(0.45, 1.30).toDouble();
+      final weight = recencyWeight * distanceWeight * speedWeight;
+      final radians = _wrapHeading(bearing) * (pi / 180);
+      sinSum += sin(radians) * weight;
+      cosSum += cos(radians) * weight;
+      weightSum += weight;
+      earliestSignificantPoint ??= from;
+    }
+
+    if (weightSum <= 0) {
+      return null;
+    }
+
+    final average = atan2(sinSum / weightSum, cosSum / weightSum) * 180 / pi;
+    final segmentBearing = _wrapHeading(average);
+    if (earliestSignificantPoint == null) {
+      return segmentBearing;
+    }
+
+    final netDistance = Geolocator.distanceBetween(
+      earliestSignificantPoint.latitude,
+      earliestSignificantPoint.longitude,
+      currentLatitude,
+      currentLongitude,
+    );
+    if (netDistance < minimumMovementMeters * 1.35) {
+      return segmentBearing;
+    }
+
+    final netBearing = Geolocator.bearingBetween(
+      earliestSignificantPoint.latitude,
+      earliestSignificantPoint.longitude,
+      currentLatitude,
+      currentLongitude,
+    );
+    return _blendHeading(segmentBearing, _wrapHeading(netBearing), 0.32);
+  }
+
+  double _sensorHeadingTrust({
+    required double speed,
+    required double accuracyMeters,
+    required double movedMeters,
+    required double? headingAccuracyDegrees,
+  }) {
+    var trust = switch (speed) {
+      >= 12 => 0.58,
+      >= 8 => 0.44,
+      >= 5 => 0.32,
+      _ => 0.18,
+    };
+
+    trust += switch (headingAccuracyDegrees) {
+      null => 0.04,
+      <= 10 => 0.24,
+      <= 20 => 0.14,
+      <= 35 => 0.04,
+      _ => -0.18,
+    };
+
+    if (accuracyMeters <= 12) {
+      trust += 0.10;
+    } else if (accuracyMeters > 24) {
+      trust -= 0.10;
+    }
+
+    if (movedMeters < max(4.0, accuracyMeters * 0.32)) {
+      trust -= 0.08;
+    }
+
+    return trust.clamp(0.0, 0.78).toDouble();
   }
 
   double _wrapHeading(double heading) {

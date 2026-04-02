@@ -130,6 +130,11 @@ class FlightRecordStore {
       jsonEncode(points.map((item) => item.toJson()).toList()),
     );
   }
+
+  Future<void> clearTrackPoints(String sessionId) async {
+    final prefs = await _prefs();
+    await prefs.remove(_pointsKey(sessionId));
+  }
 }
 
 enum FlightTrackingNoticeTone { info, caution, warning }
@@ -227,6 +232,7 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
       final loadedSessions = await _store.loadSessions();
       _sessions = loadedSessions.where((item) => item.userId == userId).toList()
         ..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+      await _normalizeStoredSessions();
 
       final activeSession = await _store.loadActiveSession();
       final runtimeState = await _store.loadTrackingRuntimeState();
@@ -304,7 +310,7 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: _singleLocationSettings(),
       );
-      final timestamp = position.timestamp;
+      final timestamp = _normalizeRecordedTime(position.timestamp);
       final sessionId = 'flight_${timestamp.millisecondsSinceEpoch}';
       final firstPoint = _telemetryFilter.filter(
             sessionId: sessionId,
@@ -378,14 +384,17 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
               currentSession,
               referenceTime: completedAt,
             );
-      final completedSession = currentSession.copyWith(
-        endedAt: completedAt,
-        status: FlightSessionStatus.completed,
-        durationSeconds:
-            max(currentSession.durationSeconds, finalDurationSeconds),
-        memo: memo.trim(),
-        pausedAt: null,
-        updatedAt: completedAt,
+      final completedSession = _sessionWithResolvedTimeline(
+        session: currentSession.copyWith(
+          endedAt: completedAt,
+          status: FlightSessionStatus.completed,
+          durationSeconds:
+              max(currentSession.durationSeconds, finalDurationSeconds),
+          memo: memo.trim(),
+          pausedAt: null,
+          updatedAt: completedAt,
+        ),
+        points: _activePoints,
       );
 
       _sessions = [
@@ -417,9 +426,13 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
   Future<FlightSessionDetail?> getSessionDetail(String sessionId) async {
     final activeSession = _activeSession;
     if (activeSession != null && activeSession.id == sessionId) {
+      final points = List<FlightTrackPoint>.from(_activePoints);
       return FlightSessionDetail(
-        session: activeSession,
-        points: List<FlightTrackPoint>.from(_activePoints),
+        session: _sessionWithResolvedTimeline(
+          session: activeSession,
+          points: points,
+        ),
+        points: points,
       );
     }
 
@@ -435,7 +448,53 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     final points = await _store.loadTrackPoints(sessionId);
-    return FlightSessionDetail(session: session, points: points);
+    return FlightSessionDetail(
+      session: _sessionWithResolvedTimeline(session: session, points: points),
+      points: points,
+    );
+  }
+
+  Future<bool> deleteSession(String sessionId) async {
+    if (_working) {
+      return false;
+    }
+
+    if (_activeSession?.id == sessionId) {
+      _errorMessage = '진행 중인 비행 기록은 삭제할 수 없습니다.';
+      notifyListeners();
+      return false;
+    }
+
+    final existingIndex = _sessions.indexWhere((item) => item.id == sessionId);
+    if (existingIndex < 0) {
+      _errorMessage = '삭제할 비행 기록을 찾지 못했습니다.';
+      notifyListeners();
+      return false;
+    }
+
+    _working = true;
+    _errorMessage = null;
+    _statusMessage = null;
+    notifyListeners();
+
+    try {
+      _sessions = [
+        for (final session in _sessions)
+          if (session.id != sessionId) session,
+      ]..sort((a, b) => b.startedAt.compareTo(a.startedAt));
+
+      await _store.saveSessions(_sessions);
+      await _store.clearTrackPoints(sessionId);
+
+      _statusMessage = '비행 기록이 삭제되었습니다.';
+      return true;
+    } catch (_) {
+      _errorMessage = '비행 기록을 삭제하지 못했습니다.';
+      return false;
+    } finally {
+      _working = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> shareSession(String sessionId) async {
@@ -508,6 +567,81 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
   String buildExportFileName(FlightSession session) {
     final dateToken = formatDate(session.startedAt).replaceAll('-', '');
     return '비행기록_$dateToken.json';
+  }
+
+  Future<void> _normalizeStoredSessions() async {
+    if (_sessions.isEmpty) {
+      return;
+    }
+
+    var changed = false;
+    final normalizedSessions = <FlightSession>[];
+    for (final session in _sessions) {
+      if (session.trackPointCount <= 0) {
+        normalizedSessions.add(session);
+        continue;
+      }
+
+      final points = await _store.loadTrackPoints(session.id);
+      final normalized = _sessionWithResolvedTimeline(
+        session: session,
+        points: points,
+      );
+      if (!_sameTimeline(session, normalized)) {
+        changed = true;
+      }
+      normalizedSessions.add(normalized);
+    }
+
+    normalizedSessions.sort((a, b) => b.startedAt.compareTo(a.startedAt));
+    _sessions = normalizedSessions;
+
+    if (changed) {
+      await _store.saveSessions(_sessions);
+    }
+  }
+
+  FlightSession _sessionWithResolvedTimeline({
+    required FlightSession session,
+    required List<FlightTrackPoint> points,
+  }) {
+    if (points.isEmpty) {
+      return session;
+    }
+
+    FlightTrackPoint earliest = points.first;
+    FlightTrackPoint latest = points.first;
+    for (final point in points.skip(1)) {
+      if (point.timestamp.isBefore(earliest.timestamp)) {
+        earliest = point;
+      }
+      if (point.timestamp.isAfter(latest.timestamp)) {
+        latest = point;
+      }
+    }
+
+    final resolvedDuration = latest.timestamp.difference(earliest.timestamp);
+    return session.copyWith(
+      startedAt: earliest.timestamp,
+      endedAt: session.status == FlightSessionStatus.completed
+          ? latest.timestamp
+          : session.endedAt,
+      durationSeconds: resolvedDuration > Duration.zero
+          ? resolvedDuration.inSeconds
+          : session.durationSeconds,
+      trackPointCount: max(session.trackPointCount, points.length),
+      updatedAt: latest.timestamp.isAfter(session.updatedAt)
+          ? latest.timestamp
+          : session.updatedAt,
+    );
+  }
+
+  bool _sameTimeline(FlightSession previous, FlightSession next) {
+    return previous.startedAt == next.startedAt &&
+        previous.endedAt == next.endedAt &&
+        previous.durationSeconds == next.durationSeconds &&
+        previous.trackPointCount == next.trackPointCount &&
+        previous.updatedAt == next.updatedAt;
   }
 
   void clearMessages() {
@@ -884,7 +1018,7 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
     required String sessionId,
     required Position position,
   }) {
-    final timestamp = position.timestamp;
+    final timestamp = _normalizeRecordedTime(position.timestamp);
     return FlightTrackPoint(
       id: '${sessionId}_${timestamp.microsecondsSinceEpoch}',
       sessionId: sessionId,
@@ -897,6 +1031,9 @@ class FlightRecordManager extends ChangeNotifier with WidgetsBindingObserver {
       accuracy: position.accuracy >= 0 ? position.accuracy : null,
     );
   }
+
+  DateTime _normalizeRecordedTime(DateTime timestamp) =>
+      timestamp.isUtc ? timestamp.toLocal() : timestamp;
 
   double _safeSpeed(double? speed) {
     if (speed == null || !speed.isFinite || speed < 0) {

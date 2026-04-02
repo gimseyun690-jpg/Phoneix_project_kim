@@ -652,7 +652,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
         final panelHeight = _detailsCollapsed
-            ? 98.0
+            ? 102.0
             : min(max(availableHeight * 0.30, 206.0), 264.0);
         final metricsBottom = panelHeight + 8;
         final FlightTrackingNotice? trackingNotice = null;
@@ -1144,7 +1144,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
             ),
             body: LayoutBuilder(
               builder: (context, constraints) {
-                const collapsedPanelHeight = 120.0;
+                const collapsedPanelHeight = 124.0;
                 const minExpandedPanelHeight = 280.0;
                 final availableHeight = constraints.maxHeight;
                 final maxMapHeight =

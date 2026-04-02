@@ -168,6 +168,23 @@ class FlightLiveMetrics {
         .toList();
 
     final smoothed = _resolveSmoothedHeading(recentPoints);
+    final derived = _resolveRouteHeading(recentPoints);
+    if (smoothed != null && derived != null) {
+      final gap = _bearingDelta(derived, smoothed).abs();
+      final speed = lastPoint.speed ?? 0;
+      final accuracy = lastPoint.accuracy ?? 12;
+      if (gap <= 14) {
+        final factor = speed >= 8 ? 0.34 : 0.24;
+        return _blendHeading(derived, smoothed, factor);
+      }
+      if (gap <= 32 && speed >= 7 && accuracy <= 18) {
+        return _blendHeading(derived, smoothed, 0.18);
+      }
+      return derived;
+    }
+    if (derived != null) {
+      return derived;
+    }
     if (smoothed != null) {
       return smoothed;
     }
@@ -187,7 +204,7 @@ class FlightLiveMetrics {
       lastPoint.latitude,
       lastPoint.longitude,
     );
-    return ((bearing % 360) + 360) % 360;
+    return _normalizeHeading(bearing);
   }
 
   static double? _resolveSmoothedHeading(List<FlightTrackPoint> points) {
@@ -237,7 +254,102 @@ class FlightLiveMetrics {
     }
 
     final average = atan2(sinSum / weightSum, cosSum / weightSum) * 180 / pi;
-    return ((average % 360) + 360) % 360;
+    return _normalizeHeading(average);
+  }
+
+  static double? _resolveRouteHeading(List<FlightTrackPoint> points) {
+    if (points.length < 2) {
+      return null;
+    }
+
+    final lastPoint = points.last;
+    double sinSum = 0;
+    double cosSum = 0;
+    double weightSum = 0;
+    FlightTrackPoint? earliestSignificantPoint;
+    for (var index = 1; index < points.length; index++) {
+      final from = points[index - 1];
+      final to = points[index];
+      final movedMeters = Geolocator.distanceBetween(
+        from.latitude,
+        from.longitude,
+        to.latitude,
+        to.longitude,
+      );
+      if (movedMeters < 5.5) {
+        continue;
+      }
+
+      final segmentSeconds =
+          max(1, to.timestamp.difference(from.timestamp).inMilliseconds) / 1000;
+      final speedMps = movedMeters / segmentSeconds;
+      if (speedMps < 1.8 && (to.accuracy ?? 30) > 18) {
+        continue;
+      }
+
+      final bearing = Geolocator.bearingBetween(
+        from.latitude,
+        from.longitude,
+        to.latitude,
+        to.longitude,
+      );
+      final ageSeconds =
+          max(0, lastPoint.timestamp.difference(to.timestamp).inSeconds)
+              .toDouble();
+      final recencyWeight = 1 / (1 + (ageSeconds / 4.5));
+      final distanceWeight = (movedMeters / 16.0).clamp(0.35, 1.8).toDouble();
+      final speedWeight = (speedMps / 8.0).clamp(0.45, 1.25).toDouble();
+      final weight = recencyWeight * distanceWeight * speedWeight;
+      final radians = _normalizeHeading(bearing) * (pi / 180);
+      sinSum += sin(radians) * weight;
+      cosSum += cos(radians) * weight;
+      weightSum += weight;
+      earliestSignificantPoint ??= from;
+    }
+
+    if (weightSum <= 0) {
+      return null;
+    }
+
+    final segmentAverage =
+        atan2(sinSum / weightSum, cosSum / weightSum) * 180 / pi;
+    final normalizedAverage = _normalizeHeading(segmentAverage);
+    if (earliestSignificantPoint == null) {
+      return normalizedAverage;
+    }
+
+    final netDistance = Geolocator.distanceBetween(
+      earliestSignificantPoint.latitude,
+      earliestSignificantPoint.longitude,
+      lastPoint.latitude,
+      lastPoint.longitude,
+    );
+    if (netDistance < 12) {
+      return normalizedAverage;
+    }
+
+    final netBearing = Geolocator.bearingBetween(
+      earliestSignificantPoint.latitude,
+      earliestSignificantPoint.longitude,
+      lastPoint.latitude,
+      lastPoint.longitude,
+    );
+    return _blendHeading(
+        normalizedAverage, _normalizeHeading(netBearing), 0.28);
+  }
+
+  static double _normalizeHeading(double heading) {
+    final normalized = heading % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  }
+
+  static double _bearingDelta(double from, double to) {
+    return (to - from + 540) % 360 - 180;
+  }
+
+  static double _blendHeading(double from, double to, double factor) {
+    final delta = _bearingDelta(from, to);
+    return _normalizeHeading(from + (delta * factor));
   }
 
   static bool _resolveTakeoffSignal({
