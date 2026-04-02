@@ -5,7 +5,7 @@ import 'package:paragliding_mvp_frontend/models/app_models.dart';
 
 void main() {
   group('FlightReplayData', () {
-    test('실제 기록 점을 기반으로 진행률과 최고 고도 지점을 계산한다', () {
+    test('실제 기록 점을 바탕으로 진행률과 최고 고도 지점을 계산한다', () {
       final replay = FlightReplayData.fromPoints([
         _point(
           index: 0,
@@ -100,7 +100,7 @@ void main() {
       expect(replay.indexForProgress(1.0), 2);
     });
 
-    test('지속 상승 구간은 써멀 추정으로 묶는다', () {
+    test('지속 상승 구간을 써멀 추정으로 묶는다', () {
       final replay = FlightReplayData.fromPoints([
         _point(
           index: 0,
@@ -155,8 +155,10 @@ void main() {
       expect(replay.thermalSegments, isNotEmpty);
       expect(replay.thermalSegments.first.label, '써멀 1');
       expect(replay.thermalSegments.first.altitudeGainMeters, greaterThan(30));
-      expect(replay.thermalSegments.first.duration,
-          greaterThan(const Duration(seconds: 20)));
+      expect(
+        replay.thermalSegments.first.duration,
+        greaterThan(const Duration(seconds: 20)),
+      );
     });
   });
 }

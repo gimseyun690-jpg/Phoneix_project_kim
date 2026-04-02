@@ -3,6 +3,7 @@ import 'dart:math';
 
 // ignore_for_file: unused_element, unused_element_parameter, prefer_final_fields
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -62,7 +63,8 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
   double _mapZoom = 14.5;
   bool _followLocation = true;
   bool _detailsCollapsed = true;
-  _LiveFlightMapMode _mapMode = _LiveFlightMapMode.threeD;
+  _LiveFlightMapMode _mapMode =
+      kIsWeb ? _LiveFlightMapMode.twoD : _LiveFlightMapMode.threeD;
   ParaglidingMapViewType _mapViewType = ParaglidingMapViewType.satellite;
   bool _loadingSites = true;
   bool _refreshingContext = false;
@@ -452,6 +454,10 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
   }
 
   void _changeMapMode(_LiveFlightMapMode mode) {
+    if (kIsWeb && mode == _LiveFlightMapMode.threeD) {
+      return;
+    }
+
     if (_mapMode == mode) {
       return;
     }
@@ -646,7 +652,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
         final panelHeight = _detailsCollapsed
-            ? 72.0
+            ? 90.0
             : min(max(availableHeight * 0.30, 206.0), 264.0);
         final metricsBottom = panelHeight + 8;
         final FlightTrackingNotice? trackingNotice = null;
@@ -741,12 +747,14 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                           onChanged: _changeMapViewType,
                           compact: true,
                         ),
-                        const SizedBox(height: 8),
-                        _CompactFlightMapModeToggle(
-                          value: _mapMode,
-                          onChanged: _changeMapMode,
-                          compact: true,
-                        ),
+                        if (!kIsWeb) ...[
+                          const SizedBox(height: 8),
+                          _CompactFlightMapModeToggle(
+                            value: _mapMode,
+                            onChanged: _changeMapMode,
+                            compact: true,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         _MapOverlayActionButton(
                           icon: Icons.my_location_rounded,
@@ -785,8 +793,8 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                 height: panelHeight,
                 child: Material(
                   color: Colors.transparent,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(10, 5, 10, 8),
                     decoration: BoxDecoration(
                       color: const Color(0xF7111C24),
                       borderRadius: BorderRadius.circular(22),
@@ -811,7 +819,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             Expanded(
@@ -873,7 +881,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             _PanelIconButton(
                               icon: session.isPaused
                                   ? Icons.play_arrow_rounded
@@ -885,7 +893,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                                   ? null
                                   : _toggleRecordingState,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 4),
                             _PanelIconButton(
                               icon: Icons.stop_rounded,
                               tooltip: '비행 기록 종료',
@@ -2210,9 +2218,9 @@ class _MapOverlayActionButton extends StatelessWidget {
           onTap: onPressed,
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(icon, size: 20, color: Colors.white),
+            width: 34,
+            height: 34,
+            child: Icon(icon, size: 17, color: Colors.white),
           ),
         ),
       ),
@@ -2248,19 +2256,19 @@ class _PanelIconButton extends StatelessWidget {
         color: destructive
             ? const Color(0x55D94B4B)
             : Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onPressed,
           borderRadius: BorderRadius.circular(14),
-          child: SizedBox(
-            width: 40,
-            height: 40,
-            child: Icon(
-              icon,
-              size: 20,
-              color: destructive
-                  ? const Color(0xFFFFD9D9)
-                  : Colors.white.withValues(alpha: 0.94),
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(14),
+            child: SizedBox(
+              width: 34,
+              height: 34,
+              child: Icon(
+                icon,
+                size: 17,
+                color: destructive
+                    ? const Color(0xFFFFD9D9)
+                    : Colors.white.withValues(alpha: 0.94),
             ),
           ),
         ),

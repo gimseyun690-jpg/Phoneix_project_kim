@@ -800,7 +800,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 210,
+              height: 236,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.forecast.length,
@@ -925,7 +925,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 248,
+              height: 280,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.extendedForecast.length,
@@ -1669,7 +1669,7 @@ class _ForecastTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         width: 132,
-        padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
+        padding: const EdgeInsets.fromLTRB(11, 10, 11, 9),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(22),
@@ -1684,6 +1684,8 @@ class _ForecastTile extends StatelessWidget {
           children: [
             Text(
               _relativeLabel(item.time),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: muted,
                     fontWeight: FontWeight.w700,
@@ -1692,28 +1694,34 @@ class _ForecastTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               _formatClock(item.time),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 16,
+              size: 15,
               color: foreground,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               _formatTemperature(item.temperatureCelsius),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               _formatSpeed(item.windSpeedMps),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w700,
@@ -1730,6 +1738,8 @@ class _ForecastTile extends StatelessWidget {
                 Expanded(
                   child: Text(
                     _shortHeading(item.windDirection),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: muted,
                           fontWeight: FontWeight.w600,
@@ -1738,7 +1748,7 @@ class _ForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
@@ -1787,8 +1797,8 @@ class _DailyForecastTile extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        width: 144,
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        width: 140,
+        padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(22),
@@ -1803,6 +1813,8 @@ class _DailyForecastTile extends StatelessWidget {
           children: [
             Text(
               _longRangeLabel(item.date),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: muted,
                     fontWeight: FontWeight.w700,
@@ -1811,31 +1823,37 @@ class _DailyForecastTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               _formatForecastDate(item.date),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 16,
+              size: 15,
               color: foreground,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               _formatDailyTemperatureRange(
                 item.minTemperatureCelsius,
                 item.maxTemperatureCelsius,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               _formatSpeed(item.windSpeedMps),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: foreground,
                     fontWeight: FontWeight.w600,
@@ -1854,6 +1872,8 @@ class _DailyForecastTile extends StatelessWidget {
                     item.windDirection == null
                         ? '풍향 준비 중'
                         : _shortHeading(item.windDirection!),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: muted,
                           fontWeight: FontWeight.w600,
@@ -1862,7 +1882,7 @@ class _DailyForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
@@ -1878,12 +1898,12 @@ class _DailyForecastTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: selected ? 0.26 : 0.14),
                   borderRadius: BorderRadius.circular(999),

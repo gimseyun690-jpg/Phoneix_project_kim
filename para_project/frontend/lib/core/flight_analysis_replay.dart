@@ -107,6 +107,57 @@ class FlightReplayData {
   FlightReplayFrame? get highestFrame =>
       hasFrames ? frames[highestFrameIndex] : null;
 
+  FlightReplayFrame frameAt(int index) {
+    if (frames.isEmpty) {
+      throw StateError('리플레이 프레임이 없습니다.');
+    }
+    final clamped = index.clamp(0, frames.length - 1);
+    return frames[clamped];
+  }
+
+  int futureFrameIndex(
+    int index, {
+    int minimumLeadFrames = 5,
+    int maximumLeadFrames = 18,
+  }) {
+    if (frames.isEmpty) {
+      return 0;
+    }
+
+    final safeIndex = index.clamp(0, frames.length - 1).toInt();
+    final current = frameAt(safeIndex);
+    final speedFactor = (current.speedMps / 4.0).round().clamp(
+          0,
+          max(0, maximumLeadFrames - minimumLeadFrames),
+        ).toInt();
+    return min(
+      frames.length - 1,
+      safeIndex + minimumLeadFrames + speedFactor,
+    );
+  }
+
+  double bearingBetweenIndices(int startIndex, int endIndex) {
+    if (frames.length < 2) {
+      return 0;
+    }
+
+    final safeStartIndex = startIndex.clamp(0, frames.length - 1);
+    final safeEndIndex = endIndex.clamp(0, frames.length - 1);
+    if (safeStartIndex == safeEndIndex) {
+      return frameAt(safeStartIndex).heading;
+    }
+
+    final start = frameAt(safeStartIndex);
+    final end = frameAt(safeEndIndex);
+    final bearing = Geolocator.bearingBetween(
+      start.latitude,
+      start.longitude,
+      end.latitude,
+      end.longitude,
+    );
+    return _normalizeBearing(bearing);
+  }
+
   int nearestFrameIndex(DateTime timestamp) {
     if (frames.isEmpty) {
       return 0;
@@ -174,10 +225,7 @@ class FlightReplayData {
         selectedIndex++) {
       final sourceIndex = selectedIndices[selectedIndex];
       final point = points[sourceIndex];
-      final safeDurationSeconds = max(
-        1,
-        totalDuration.inSeconds,
-      );
+      final safeDurationSeconds = max(1, totalDuration.inSeconds);
       final elapsedSeconds = max(
         0,
         point.timestamp.difference(points.first.timestamp).inSeconds,
@@ -280,10 +328,7 @@ class FlightReplayData {
       return List<int>.generate(points.length, (index) => index);
     }
 
-    final selected = <int>{0, points.length - 1};
-    final highestRawIndex = _highestAltitudeIndex(points);
-    selected.add(highestRawIndex);
-
+    final selected = <int>{0, points.length - 1, _highestAltitudeIndex(points)};
     final step = (points.length - 1) / (maxFrames - 1);
     for (var index = 0; index < maxFrames; index++) {
       selected.add((index * step).round());
@@ -406,6 +451,7 @@ class FlightReplayData {
         return index;
       }
     }
+
     return min(1, frames.length - 1);
   }
 

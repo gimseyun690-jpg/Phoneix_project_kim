@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -195,15 +195,15 @@ class FlightMapView extends StatelessWidget {
     }
 
     final minLat =
-        points.map((item) => item.latitude).reduce((a, b) => min(a, b));
+        points.map((item) => item.latitude).reduce((a, b) => math.min(a, b));
     final maxLat =
-        points.map((item) => item.latitude).reduce((a, b) => max(a, b));
+        points.map((item) => item.latitude).reduce((a, b) => math.max(a, b));
     final minLng =
-        points.map((item) => item.longitude).reduce((a, b) => min(a, b));
+        points.map((item) => item.longitude).reduce((a, b) => math.min(a, b));
     final maxLng =
-        points.map((item) => item.longitude).reduce((a, b) => max(a, b));
+        points.map((item) => item.longitude).reduce((a, b) => math.max(a, b));
 
-    final spread = max(maxLat - minLat, maxLng - minLng);
+    final spread = math.max(maxLat - minLat, maxLng - minLng);
     if (spread < 0.01) {
       return 15;
     }
@@ -246,7 +246,7 @@ class _CurrentPositionMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final angle = ((heading ?? 0) % 360) * degree2Radian;
+    final angle = ((heading ?? 0) % 360) * (math.pi / 180);
     return Container(
       decoration: const BoxDecoration(
         shape: BoxShape.circle,

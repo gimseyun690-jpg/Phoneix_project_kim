@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:maplibre/maplibre.dart';
 
 import '../core/map_view_type.dart';
 import '../models/app_models.dart';
+import 'flight_map_view.dart';
 
 class FlightMap3DView extends StatefulWidget {
   const FlightMap3DView({
@@ -118,6 +120,21 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
     final currentPoint = widget.points.isEmpty ? null : widget.points.last;
     final routePoints =
         widget.points.map(_toGeographicPoint).toList(growable: false);
+
+    if (kIsWeb) {
+      return FlightMapView(
+        points: widget.points,
+        height: widget.height,
+        borderRadius: widget.borderRadius,
+        currentHeadingDegrees: currentPoint?.heading,
+        mapViewType: widget.mapViewType,
+        siteLatitude: widget.siteLatitude,
+        siteLongitude: widget.siteLongitude,
+        siteLabel: widget.siteLabel,
+        showSiteLabel: false,
+      );
+    }
+
     final initialCenter =
         currentPoint != null ? _toGeographicPoint(currentPoint) : sitePoint;
     final effectiveCenter =

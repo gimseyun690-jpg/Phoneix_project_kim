@@ -116,13 +116,13 @@ class FlightAnalysisSummary {
         keyMoments: const [],
         insights: const [
           FlightAnalysisInsight(
-            title: '기록 포인트 부족',
-            description: '분석에 필요한 위치 포인트가 충분하지 않아 요약만 표시합니다.',
+            title: '기록 샘플 부족',
+            description: '분석에 필요한 위치 샘플이 충분하지 않아 요약만 표시합니다.',
           ),
         ],
         overview:
-            '${formatDuration(session.duration)} 동안 비행을 기록했습니다. 경로 포인트가 적어 상세 분석은 참고용으로만 표시합니다.',
-        qualityNote: '기록 포인트가 적어 고도·속도 흐름 해석은 제한적입니다.',
+            '${formatDuration(session.duration)} 동안 비행을 기록했습니다. 경로 샘플이 적어 상세 분석은 참고용으로만 표시됩니다.',
+        qualityNote: '기록 샘플이 적어 고도와 속도 흐름 해석은 제한적입니다.',
       );
     }
 
@@ -330,7 +330,7 @@ class FlightAnalysisSummary {
 
     if (totalAltitudeGainMeters >= 120) {
       buffer.write(
-        ' 상승 누적은 ${formatAltitudeMeters(totalAltitudeGainMeters)} 정도로 기록되었습니다.',
+        ' 누적 상승 고도는 ${formatAltitudeMeters(totalAltitudeGainMeters)} 정도로 기록됐습니다.',
       );
     }
 
@@ -348,7 +348,7 @@ class FlightAnalysisSummary {
     required int pointCount,
   }) {
     if (pointCount < 6) {
-      return '기록 포인트 수가 적어 이동 흐름 해석은 참고용으로 보는 편이 좋습니다.';
+      return '기록 샘플 수가 적어 이동 흐름 해석은 참고용으로 보는 편이 좋습니다.';
     }
     if (averageAccuracyMeters == null) {
       return 'GPS 정확도 정보가 부족해 일부 경로 해석은 제한적입니다.';
@@ -357,9 +357,9 @@ class FlightAnalysisSummary {
       return 'GPS 정확도가 안정적인 편이라 경로 해석 신뢰도가 비교적 높습니다.';
     }
     if (averageAccuracyMeters <= 25) {
-      return 'GPS 정확도는 보통 수준으로, 세부 회전 구간은 참고용으로 확인해 주세요.';
+      return 'GPS 정확도는 보통 수준으로, 세밀한 회전 구간은 참고용으로 확인해 주세요.';
     }
-    return 'GPS 흔들림 가능성이 있어 세부 경로와 속도 변화는 참고용으로 보는 편이 안전합니다.';
+    return 'GPS 흔들림 가능성이 있어 일부 경로와 속도 변화는 참고용으로 보는 편이 안전합니다.';
   }
 
   static List<FlightAnalysisInsight> _buildInsights({
@@ -385,7 +385,7 @@ class FlightAnalysisSummary {
       FlightAnalysisInsight(
         title: '상승·하강 흐름',
         description:
-            '최대 상승률 ${formatVerticalSpeed(maxClimbRateMps)}, 최대 하강률 ${formatVerticalSpeed(maxSinkRateMps)} 수준으로 기록되었습니다.',
+            '최대 상승률은 ${formatVerticalSpeed(maxClimbRateMps)}, 최대 하강률은 ${formatVerticalSpeed(maxSinkRateMps)}로 기록됐습니다.',
       ),
       FlightAnalysisInsight(
         title: '기록 품질 참고',
@@ -393,7 +393,7 @@ class FlightAnalysisSummary {
       ),
       if (session.memo.trim().isNotEmpty)
         FlightAnalysisInsight(
-          title: '저장 메모',
+          title: '파일럿 메모',
           description: session.memo.trim(),
         ),
     ];

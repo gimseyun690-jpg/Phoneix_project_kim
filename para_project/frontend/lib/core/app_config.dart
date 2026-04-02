@@ -17,4 +17,11 @@ class AppConfig {
     'API_BASE_URL',
     defaultValue: 'http://127.0.0.1:8000/api/v1',
   );
+
+  static const String mapboxAccessToken = String.fromEnvironment(
+    'MAPBOX_ACCESS_TOKEN',
+    defaultValue: '',
+  );
+
+  static bool get hasMapboxAccessToken => mapboxAccessToken.trim().isNotEmpty;
 }

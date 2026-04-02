@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
+import '../core/app_config.dart';
 import '../core/flight_analysis_replay.dart';
 import '../core/flight_analysis_summary.dart';
 import '../core/korea_flight_guide.dart';
@@ -63,11 +64,88 @@ class _FlightAnalysisReplaySectionState
   int _replayIndex = 0;
   double _playbackSpeed = 1.0;
   FlightReplaySegment? _selectedSegment;
+  bool _autoCameraEnabled = true;
 
   bool get _isPlaying => _playbackTimer != null;
   bool get _canUse3D => _replayData.frames.length >= 2;
-  bool get _supportsThreeDOnCurrentPlatform => !kIsWeb;
+  bool get _supportsThreeDOnCurrentPlatform =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+  bool get _hasMapboxSetup => AppConfig.hasMapboxAccessToken;
+  bool get _hasThreeDEntryReady =>
+      _supportsThreeDOnCurrentPlatform && _hasMapboxSetup && _canUse3D;
   int get _safeReplayIndex => _clampReplayIndex(_replayIndex);
+  int get _selectedRangeStart => _selectedSegment?.startIndex ?? 0;
+  int get _selectedRangeEnd =>
+      _selectedSegment?.endIndex ?? max(0, _replayData.frames.length - 1);
+
+  double get _selectedSegmentProgress {
+    final start = _selectedRangeStart;
+    final end = _selectedRangeEnd;
+    if (end <= start) {
+      return 0;
+    }
+    return ((_safeReplayIndex - start) / (end - start)).clamp(0.0, 1.0);
+  }
+
+  FlightReplaySegment? get _currentThermalSegment {
+    for (final segment in _replayData.thermalSegments) {
+      if (_safeReplayIndex >= segment.startIndex &&
+          _safeReplayIndex <= segment.endIndex) {
+        return segment;
+      }
+    }
+    return null;
+  }
+
+  FlightReplaySegment? get _takeoffSegment {
+    if (_replayData.frames.length < 2 || _replayData.takeoffFrameIndex <= 0) {
+      return null;
+    }
+    final endIndex = min(
+      _replayData.takeoffFrameIndex,
+      _replayData.frames.length - 1,
+    );
+    final endFrame = _replayData.frames[endIndex];
+    return FlightReplaySegment(
+      type: FlightReplaySegmentType.takeoff,
+      label: '이륙 구간',
+      startIndex: 0,
+      endIndex: endIndex,
+      duration: endFrame.elapsedDuration,
+      altitudeGainMeters: endFrame.altitudeFromStartMeters,
+      maxClimbRateMps: _replayData.frames.take(endIndex + 1).fold<double>(
+            0,
+            (previousValue, frame) =>
+                max(previousValue, frame.verticalSpeedMps),
+          ),
+    );
+  }
+
+  FlightReplaySegment? get _landingSegment {
+    if (_replayData.frames.length < 2 ||
+        _replayData.landingFrameIndex >= _replayData.frames.length - 1) {
+      return null;
+    }
+    final startIndex = max(0, _replayData.landingFrameIndex);
+    final startFrame = _replayData.frames[startIndex];
+    final endFrame = _replayData.frames.last;
+    return FlightReplaySegment(
+      type: FlightReplaySegmentType.landing,
+      label: '착륙 구간',
+      startIndex: startIndex,
+      endIndex: _replayData.frames.length - 1,
+      duration: endFrame.elapsedDuration - startFrame.elapsedDuration,
+      altitudeGainMeters:
+          endFrame.displayAltitudeMeters - startFrame.displayAltitudeMeters,
+      maxClimbRateMps: _replayData.frames.skip(startIndex).fold<double>(
+            0,
+            (previousValue, frame) =>
+                max(previousValue, frame.verticalSpeedMps),
+          ),
+    );
+  }
 
   @override
   void initState() {
@@ -109,32 +187,13 @@ class _FlightAnalysisReplaySectionState
     _cameraMode = FlightReplayCameraMode.overview;
     _playbackSpeed = 1.0;
     _selectedSegment = null;
+    _autoCameraEnabled = true;
   }
 
   void _setViewMode(FlightAnalysisViewMode mode) {
     if (_viewMode == mode) {
       return;
     }
-
-    if (mode == FlightAnalysisViewMode.threeD && !_canUse3D) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('3D 복기를 보려면 위치 기록이 두 점 이상 필요합니다.'),
-        ),
-      );
-      return;
-    }
-
-    if (mode == FlightAnalysisViewMode.threeD &&
-        !_supportsThreeDOnCurrentPlatform) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('크롬에서는 3D 분석 보기가 아직 지원되지 않습니다. 앱에서 확인해 주세요.'),
-        ),
-      );
-      return;
-    }
-
     setState(() {
       _viewMode = mode;
       if (mode == FlightAnalysisViewMode.threeD &&
@@ -148,7 +207,7 @@ class _FlightAnalysisReplaySectionState
   }
 
   void _togglePlayback() {
-    if (!_canUse3D) {
+    if (!_hasThreeDEntryReady) {
       return;
     }
 
@@ -164,7 +223,7 @@ class _FlightAnalysisReplaySectionState
       _replayIndex = rangeStart;
     }
 
-    _playbackTimer = Timer.periodic(const Duration(milliseconds: 360), (_) {
+    _playbackTimer = Timer.periodic(const Duration(milliseconds: 300), (_) {
       if (!mounted || _replayData.frames.isEmpty) {
         return;
       }
@@ -174,8 +233,8 @@ class _FlightAnalysisReplaySectionState
         >= 2 => 2,
         _ => 1,
       };
-      final nextIndex = min(rangeEnd, _replayIndex + step);
 
+      final nextIndex = min(rangeEnd, _replayIndex + step);
       if (nextIndex == _replayIndex) {
         _playbackTimer?.cancel();
       }
@@ -188,24 +247,12 @@ class _FlightAnalysisReplaySectionState
   }
 
   void _seekToIndex(int index, {bool stopPlayback = true}) {
-    final clamped = _clampReplayIndex(index);
     if (stopPlayback) {
       _playbackTimer?.cancel();
     }
     setState(() {
-      _replayIndex = clamped;
+      _replayIndex = _clampReplayIndex(index);
     });
-  }
-
-  void _seekToMoment(FlightAnalysisMoment moment) {
-    widget.onFocusMoment(moment);
-    if (_replayData.frames.isEmpty) {
-      return;
-    }
-    _selectedSegment = null;
-    _seekToIndex(
-      _replayData.nearestFrameIndex(moment.point.timestamp),
-    );
   }
 
   void _selectSegment(FlightReplaySegment? segment) {
@@ -214,6 +261,94 @@ class _FlightAnalysisReplaySectionState
       _selectedSegment = segment;
       _replayIndex = segment?.startIndex ?? 0;
     });
+  }
+
+  int _clampReplayIndex(int index) {
+    if (_replayData.frames.isEmpty) {
+      return 0;
+    }
+    return min(max(index, 0), _replayData.frames.length - 1);
+  }
+
+  String _segmentStateLabel(double verticalSpeed) {
+    if (verticalSpeed >= 0.8) {
+      return '상승 구간';
+    }
+    if (verticalSpeed <= -0.8) {
+      return '하강 구간';
+    }
+    return '순항 구간';
+  }
+
+  String _signedAltitudeText(
+    double value, {
+    String zeroLabel = '이륙 고도와 유사',
+  }) {
+    if (value.abs() < 1) {
+      return zeroLabel;
+    }
+    final prefix = value > 0 ? '+' : '';
+    return '$prefix${value.toStringAsFixed(0)}m';
+  }
+
+  FlightReplayCameraMode _effectiveCameraMode(FlightReplayFrame currentFrame) {
+    if (!_autoCameraEnabled) {
+      return _cameraMode;
+    }
+
+    final rangeProgress = _selectedSegment == null
+        ? currentFrame.progress
+        : _selectedSegmentProgress;
+    final onThermal = _currentThermalSegment != null ||
+        (_safeReplayIndex - _replayData.highestFrameIndex).abs() <= 2;
+
+    if (!_isPlaying && rangeProgress >= 0.96) {
+      return FlightReplayCameraMode.overview;
+    }
+    if (rangeProgress <= 0.08) {
+      return FlightReplayCameraMode.overview;
+    }
+    if (_safeReplayIndex <= _replayData.takeoffFrameIndex + 3) {
+      return FlightReplayCameraMode.perspective;
+    }
+    if (onThermal) {
+      return FlightReplayCameraMode.perspective;
+    }
+    if (_safeReplayIndex >= _replayData.landingFrameIndex ||
+        rangeProgress >= 0.88) {
+      return FlightReplayCameraMode.follow;
+    }
+    return FlightReplayCameraMode.follow;
+  }
+
+  String _autoCameraStageLabel(FlightReplayFrame currentFrame) {
+    if (!_autoCameraEnabled) {
+      return '수동 시점';
+    }
+
+    final rangeProgress = _selectedSegment == null
+        ? currentFrame.progress
+        : _selectedSegmentProgress;
+    final onThermal = _currentThermalSegment != null ||
+        (_safeReplayIndex - _replayData.highestFrameIndex).abs() <= 2;
+
+    if (!_isPlaying && rangeProgress >= 0.96) {
+      return '자동 연출 · 마무리 전체 보기';
+    }
+    if (rangeProgress <= 0.08) {
+      return '자동 연출 · 전체 경로 진입';
+    }
+    if (_safeReplayIndex <= _replayData.takeoffFrameIndex + 3) {
+      return '자동 연출 · 이륙 강조';
+    }
+    if (onThermal) {
+      return '자동 연출 · 써멀 강조';
+    }
+    if (_safeReplayIndex >= _replayData.landingFrameIndex ||
+        rangeProgress >= 0.88) {
+      return '자동 연출 · 착륙 정리';
+    }
+    return '자동 연출 · 경로 따라가기';
   }
 
   @override
@@ -236,8 +371,8 @@ class _FlightAnalysisReplaySectionState
                     children: [
                       Text(
                         _viewMode == FlightAnalysisViewMode.threeD
-                            ? '입체 비행 복기'
-                            : '지도 기반 비행 리뷰',
+                            ? '입체 비행 분석'
+                            : '지도 기반 비행 리플레이',
                         style:
                             Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w800,
@@ -246,8 +381,8 @@ class _FlightAnalysisReplaySectionState
                       const SizedBox(height: 4),
                       Text(
                         _viewMode == FlightAnalysisViewMode.threeD
-                            ? '시간과 고도 흐름을 함께 보며 비행을 입체적으로 되짚습니다.'
-                            : '핵심 시점을 눌러 지도 위에서 경로와 순간 변화를 확인합니다.',
+                            ? '지형과 고도 변화를 함께 보며 실제 비행 흐름을 입체적으로 복기합니다.'
+                            : '핵심 시점과 경로를 지도에서 빠르게 훑어보며 비행 흐름을 정리합니다.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme
@@ -304,22 +439,24 @@ class _FlightAnalysisReplaySectionState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final moment in widget.summary.keyMoments) ...[
-                _MomentChip(
-                  moment: moment,
-                  isSelected: widget.selectedMoment?.type == moment.type,
-                  onTap: () => widget.onFocusMoment(moment),
-                ),
-                const SizedBox(width: 8),
+        if (widget.summary.keyMoments.isNotEmpty) ...[
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final moment in widget.summary.keyMoments) ...[
+                  _MomentChip(
+                    moment: moment,
+                    isSelected: widget.selectedMoment?.type == moment.type,
+                    onTap: () => widget.onFocusMoment(moment),
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
+          const SizedBox(height: 14),
+        ],
         Stack(
           children: [
             FlightMapView(
@@ -343,12 +480,13 @@ class _FlightAnalysisReplaySectionState
               child: MapViewToggle(
                 value: widget.mapViewType,
                 onChanged: widget.onMapViewTypeChanged,
+                compact: true,
               ),
             ),
             if (widget.selectedMoment != null)
               Positioned(
                 left: 12,
-                right: 96,
+                right: 84,
                 bottom: 12,
                 child: _SelectedMomentOverlay(
                   title: widget.selectedMoment!.title,
@@ -366,70 +504,39 @@ class _FlightAnalysisReplaySectionState
     FlightReplayFrame? currentFrame,
   ) {
     if (!_supportsThreeDOnCurrentPlatform) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F7F8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.devices_rounded, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              '크롬에서는 3D 분석 보기를 지원하지 않습니다.',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '안드로이드 앱에서 열면 3D 경로와 재생 시점을 그대로 확인할 수 있습니다.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      return const _ReplayEmptyState(
+        icon: Icons.devices_rounded,
+        title: '웹에서는 3D 분석을 지원하지 않습니다.',
+        description: '모바일 앱에서 Mapbox 기반 3D 지형 리플레이를 확인해 주세요.',
+      );
+    }
+
+    if (!_hasMapboxSetup) {
+      return const _ReplayEmptyState(
+        icon: Icons.key_rounded,
+        title: 'Mapbox 3D 분석 설정이 필요합니다.',
+        description:
+            '실행 시 MAPBOX_ACCESS_TOKEN을 설정하면 지형 기반 3D 리플레이를 사용할 수 있습니다.',
       );
     }
 
     if (!_canUse3D || currentFrame == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F7F8),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            const Icon(Icons.alt_route_rounded, size: 32),
-            const SizedBox(height: 12),
-            Text(
-              '3D 복기를 준비할 기록이 아직 부족합니다.',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '위치 기록 점이 더 많아야 경로와 고도 변화를 입체적으로 복기할 수 있습니다.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      return const _ReplayEmptyState(
+        icon: Icons.alt_route_rounded,
+        title: '3D 분석을 준비할 경로 데이터가 아직 부족합니다.',
+        description: '위치 샘플과 고도 기록이 충분해야 입체 지형 리플레이를 표시할 수 있습니다.',
       );
     }
 
-    final currentProgress = currentFrame.progress.clamp(0.0, 1.0);
     final highestFrame = _replayData.highestFrame ?? currentFrame;
-    final verticalSpeed = currentFrame.verticalSpeedMps;
-    final altitudeDeltaFromStart = currentFrame.altitudeFromStartMeters;
-    final altitudeGapToPeak =
-        highestFrame.displayAltitudeMeters - currentFrame.displayAltitudeMeters;
+    final currentProgress = currentFrame.progress.clamp(0.0, 1.0);
     final currentThermal = _currentThermalSegment;
     final segmentProgress =
         _selectedSegment == null ? currentProgress : _selectedSegmentProgress;
+    final altitudeGapToPeak =
+        highestFrame.displayAltitudeMeters - currentFrame.displayAltitudeMeters;
+    final effectiveCameraMode = _effectiveCameraMode(currentFrame);
+    final autoCameraStageLabel = _autoCameraStageLabel(currentFrame);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,25 +546,28 @@ class _FlightAnalysisReplaySectionState
             FlightAnalysis3DView(
               replayData: _replayData,
               currentIndex: _safeReplayIndex,
-              cameraMode: _cameraMode,
+              cameraMode: effectiveCameraMode,
               mapViewType: widget.mapViewType,
+              autoDirectorEnabled: _autoCameraEnabled,
               siteLatitude: widget.siteMetadata?.latitude,
               siteLongitude: widget.siteMetadata?.longitude,
               siteLabel: widget.siteMetadata?.name,
-              height: 390,
+              rangeStartIndex: _selectedRangeStart,
+              rangeEndIndex: _selectedRangeEnd,
+              isPlaying: _isPlaying,
+              height: 406,
             ),
             Positioned(
               top: 12,
               left: 12,
-              right: 92,
+              right: 88,
               child: _ReplayTopOverlay(
                 currentTimeText: formatTime(currentFrame.timestamp),
                 currentAltitudeText:
                     formatAltitudeMeters(currentFrame.altitudeMeters),
                 highestAltitudeText:
                     formatAltitudeMeters(highestFrame.altitudeMeters),
-                totalDurationText:
-                    formatDuration(widget.detail.session.duration),
+                totalDurationText: formatDuration(_replayData.totalDuration),
                 progressText: '${(currentProgress * 100).round()}%',
               ),
             ),
@@ -467,8 +577,30 @@ class _FlightAnalysisReplaySectionState
               child: MapViewToggle(
                 value: widget.mapViewType,
                 onChanged: widget.onMapViewTypeChanged,
+                compact: true,
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilterChip(
+              selected: _autoCameraEnabled,
+              label: const Text('자동 연출'),
+              onSelected: (selected) {
+                setState(() {
+                  _autoCameraEnabled = selected;
+                });
+              },
+            ),
+            if (_autoCameraEnabled)
+              Chip(
+                avatar: const Icon(Icons.movie_filter_rounded, size: 16),
+                label: Text(autoCameraStageLabel),
+              ),
           ],
         ),
         const SizedBox(height: 12),
@@ -490,12 +622,13 @@ class _FlightAnalysisReplaySectionState
                   label: Text(mode.label),
                 ),
             ],
-            selected: {_cameraMode},
+            selected: {effectiveCameraMode},
             onSelectionChanged: (selection) {
               if (selection.isEmpty) {
                 return;
               }
               setState(() {
+                _autoCameraEnabled = false;
                 _cameraMode = selection.first;
               });
             },
@@ -509,19 +642,10 @@ class _FlightAnalysisReplaySectionState
           currentTimeText: formatTime(currentFrame.timestamp),
           selectedRangeLabel: _selectedSegment?.label ?? '전체 경로',
           onPlayPause: _togglePlayback,
-          onSpeedChanged: (value) {
-            final wasPlaying = _isPlaying;
-            _playbackTimer?.cancel();
-            setState(() {
-              _playbackSpeed = value;
-            });
-            if (wasPlaying) {
-              _togglePlayback();
-            }
-          },
           onReset: () {
             _seekToIndex(_selectedRangeStart);
             setState(() {
+              _autoCameraEnabled = true;
               _cameraMode = FlightReplayCameraMode.overview;
             });
           },
@@ -538,17 +662,31 @@ class _FlightAnalysisReplaySectionState
             );
             _seekToIndex(nextIndex);
           },
+          onSpeedChanged: (value) {
+            final wasPlaying = _isPlaying;
+            _playbackTimer?.cancel();
+            setState(() {
+              _playbackSpeed = value;
+            });
+            if (wasPlaying) {
+              _togglePlayback();
+            }
+          },
         ),
         const SizedBox(height: 12),
         _ReplayInsightPanel(
-          segmentLabel: _segmentStateLabel(verticalSpeed),
+          segmentLabel: _segmentStateLabel(currentFrame.verticalSpeedMps),
           altitudeDeltaText:
-              _signedAltitudeText(altitudeDeltaFromStart, zeroLabel: '이륙 고도'),
-          peakGapText: altitudeGapToPeak <= 6
+              _signedAltitudeText(currentFrame.altitudeFromStartMeters),
+          peakGapText: altitudeGapToPeak.abs() <= 6
               ? '최고 고도 지점'
-              : '${formatAltitudeMeters(altitudeGapToPeak)} 아래',
+              : '${formatAltitudeMeters(altitudeGapToPeak.abs())} 차이',
           elapsedText: formatDuration(currentFrame.elapsedDuration),
           thermalLabel: currentThermal?.label ?? '써멀 추정 없음',
+          speedText: formatSpeedKmh(currentFrame.speedMps),
+          distanceText:
+              formatDistanceMeters(currentFrame.cumulativeDistanceMeters),
+          verticalSpeedText: formatVerticalSpeed(currentFrame.verticalSpeedMps),
         ),
         const SizedBox(height: 12),
         _ReplayAltitudeProfile(
@@ -560,128 +698,67 @@ class _FlightAnalysisReplaySectionState
         const SizedBox(height: 12),
         _ReplaySegmentSelector(
           selectedLabel: _selectedSegment?.label,
-          takeoffAvailable: _replayData.takeoffFrameIndex > 0,
-          landingAvailable:
-              _replayData.landingFrameIndex < _replayData.frames.length - 1,
+          takeoffSegment: _takeoffSegment,
+          landingSegment: _landingSegment,
           thermalSegments: _replayData.thermalSegments,
           onSelectFull: () => _selectSegment(null),
-          onSelectTakeoff: () => _selectSegment(
-            FlightReplaySegment(
-              type: FlightReplaySegmentType.takeoff,
-              label: '이륙 구간',
-              startIndex: 0,
-              endIndex: _replayData.takeoffFrameIndex,
-              duration: _replayData
-                  .frames[_replayData.takeoffFrameIndex].elapsedDuration,
-              altitudeGainMeters: _replayData
-                  .frames[_replayData.takeoffFrameIndex]
-                  .altitudeFromStartMeters,
-              maxClimbRateMps: 0,
-            ),
-          ),
-          onSelectLanding: () => _selectSegment(
-            FlightReplaySegment(
-              type: FlightReplaySegmentType.landing,
-              label: '착륙 구간',
-              startIndex: _replayData.landingFrameIndex,
-              endIndex: _replayData.frames.length - 1,
-              duration: _replayData.frames.last.elapsedDuration -
-                  _replayData
-                      .frames[_replayData.landingFrameIndex].elapsedDuration,
-              altitudeGainMeters:
-                  _replayData.frames.last.displayAltitudeMeters -
-                      _replayData.frames[_replayData.landingFrameIndex]
-                          .displayAltitudeMeters,
-              maxClimbRateMps: 0,
-            ),
-          ),
-          onSelectThermal: _selectSegment,
+          onSelectSegment: _selectSegment,
         ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final moment in widget.summary.keyMoments)
-              ActionChip(
-                avatar: const Icon(Icons.timeline_rounded, size: 16),
-                label: Text(moment.title),
-                onPressed: () => _seekToMoment(moment),
+        const SizedBox(height: 10),
+        Text(
+          '3D 분석은 실제 기록된 위치, 시간, 고도 데이터를 바탕으로 재생됩니다. 출동 판단과 공역 확인은 현장 정보와 함께 추가로 확인해 주세요.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.45,
               ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _ReplayMetaPill(
-              label: '현재 속도',
-              value: formatSpeedKmh(currentFrame.speedMps),
-            ),
-            _ReplayMetaPill(
-              label: '누적 거리',
-              value: formatDistanceMeters(
-                currentFrame.cumulativeDistanceMeters,
-              ),
-            ),
-            _ReplayMetaPill(
-              label: '상승/하강',
-              value: formatVerticalSpeed(verticalSpeed),
-            ),
-          ],
         ),
       ],
     );
   }
+}
 
-  int _clampReplayIndex(int index) {
-    if (_replayData.frames.isEmpty) {
-      return 0;
-    }
-    return min(
-      max(0, index),
-      _replayData.frames.length - 1,
+class _ReplayEmptyState extends StatelessWidget {
+  const _ReplayEmptyState({
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F7F8),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 34),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  height: 1.5,
+                ),
+          ),
+        ],
+      ),
     );
-  }
-
-  String _segmentStateLabel(double verticalSpeedMps) {
-    if (verticalSpeedMps >= 0.8) {
-      return '상승 구간';
-    }
-    if (verticalSpeedMps <= -0.8) {
-      return '하강 구간';
-    }
-    return '순항 구간';
-  }
-
-  String _signedAltitudeText(double altitudeMeters,
-      {required String zeroLabel}) {
-    if (altitudeMeters.abs() < 3) {
-      return zeroLabel;
-    }
-    final prefix = altitudeMeters > 0 ? '+' : '';
-    return '$prefix${formatAltitudeMeters(altitudeMeters)}';
-  }
-
-  int get _selectedRangeStart => _selectedSegment?.startIndex ?? 0;
-
-  int get _selectedRangeEnd =>
-      _selectedSegment?.endIndex ?? max(0, _replayData.frames.length - 1);
-
-  double get _selectedSegmentProgress {
-    final total = max(1, _selectedRangeEnd - _selectedRangeStart);
-    return ((_safeReplayIndex - _selectedRangeStart) / total).clamp(0.0, 1.0);
-  }
-
-  FlightReplaySegment? get _currentThermalSegment {
-    for (final segment in _replayData.thermalSegments) {
-      if (_safeReplayIndex >= segment.startIndex &&
-          _safeReplayIndex <= segment.endIndex) {
-        return segment;
-      }
-    }
-    return null;
   }
 }
 
@@ -717,7 +794,7 @@ class _ReplayTopOverlay extends StatelessWidget {
           _ReplayCoreStat(label: '현재 고도', value: currentAltitudeText),
           _ReplayCoreStat(label: '최고 고도', value: highestAltitudeText),
           _ReplayCoreStat(label: '총 비행 시간', value: totalDurationText),
-          _ReplayCoreStat(label: '진행률', value: progressText),
+          _ReplayCoreStat(label: '재생 진행률', value: progressText),
         ],
       ),
     );
@@ -854,7 +931,9 @@ class _ReplayControlBar extends StatelessWidget {
                         Border.all(color: Colors.black.withValues(alpha: 0.08)),
                   ),
                   child: Text(
-                    '${playbackSpeed.toStringAsFixed(playbackSpeed.truncateToDouble() == playbackSpeed ? 0 : 1)}x',
+                    playbackSpeed.truncateToDouble() == playbackSpeed
+                        ? '${playbackSpeed.toStringAsFixed(0)}배속'
+                        : '${playbackSpeed.toStringAsFixed(1)}배속',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -886,33 +965,6 @@ class _ReplayControlBar extends StatelessWidget {
   }
 }
 
-class _ReplayMetaPill extends StatelessWidget {
-  const _ReplayMetaPill({
-    required this.label,
-    required this.value,
-  });
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F7F8),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Text(
-        '$label  $value',
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
-  }
-}
-
 class _ReplayInsightPanel extends StatelessWidget {
   const _ReplayInsightPanel({
     required this.segmentLabel,
@@ -920,6 +972,9 @@ class _ReplayInsightPanel extends StatelessWidget {
     required this.peakGapText,
     required this.elapsedText,
     required this.thermalLabel,
+    required this.speedText,
+    required this.distanceText,
+    required this.verticalSpeedText,
   });
 
   final String segmentLabel;
@@ -927,6 +982,9 @@ class _ReplayInsightPanel extends StatelessWidget {
   final String peakGapText;
   final String elapsedText;
   final String thermalLabel;
+  final String speedText;
+  final String distanceText;
+  final String verticalSpeedText;
 
   @override
   Widget build(BuildContext context) {
@@ -945,7 +1003,37 @@ class _ReplayInsightPanel extends StatelessWidget {
           _ReplayMetaPill(label: '최고점 대비', value: peakGapText),
           _ReplayMetaPill(label: '재생 시점', value: elapsedText),
           _ReplayMetaPill(label: '써멀 추정', value: thermalLabel),
+          _ReplayMetaPill(label: '현재 속도', value: speedText),
+          _ReplayMetaPill(label: '누적 거리', value: distanceText),
+          _ReplayMetaPill(label: '상승·하강률', value: verticalSpeedText),
         ],
+      ),
+    );
+  }
+}
+
+class _ReplayMetaPill extends StatelessWidget {
+  const _ReplayMetaPill({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        '$label  $value',
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }
@@ -1065,6 +1153,7 @@ class _ReplayAltitudeProfilePainter extends CustomPainter {
     for (var index = 1; index < points.length; index++) {
       fullPath.lineTo(points[index].dx, points[index].dy);
     }
+
     canvas.drawPath(
       fullPath,
       Paint()
@@ -1075,14 +1164,12 @@ class _ReplayAltitudeProfilePainter extends CustomPainter {
         ..strokeJoin = StrokeJoin.round,
     );
 
+    final rangeStart = min(rangeStartIndex, points.length - 1);
+    final rangeEnd = min(rangeEndIndex, points.length - 1);
     final selectionRect = Rect.fromLTWH(
-      points[min(rangeStartIndex, points.length - 1)].dx,
+      points[rangeStart].dx,
       0,
-      max(
-        6,
-        points[min(rangeEndIndex, points.length - 1)].dx -
-            points[min(rangeStartIndex, points.length - 1)].dx,
-      ),
+      max(6, points[rangeEnd].dx - points[rangeStart].dx),
       size.height,
     );
     canvas.drawRRect(
@@ -1136,23 +1223,19 @@ class _ReplayAltitudeProfilePainter extends CustomPainter {
 class _ReplaySegmentSelector extends StatelessWidget {
   const _ReplaySegmentSelector({
     required this.selectedLabel,
-    required this.takeoffAvailable,
-    required this.landingAvailable,
+    required this.takeoffSegment,
+    required this.landingSegment,
     required this.thermalSegments,
     required this.onSelectFull,
-    required this.onSelectTakeoff,
-    required this.onSelectLanding,
-    required this.onSelectThermal,
+    required this.onSelectSegment,
   });
 
   final String? selectedLabel;
-  final bool takeoffAvailable;
-  final bool landingAvailable;
+  final FlightReplaySegment? takeoffSegment;
+  final FlightReplaySegment? landingSegment;
   final List<FlightReplaySegment> thermalSegments;
   final VoidCallback onSelectFull;
-  final VoidCallback onSelectTakeoff;
-  final VoidCallback onSelectLanding;
-  final ValueChanged<FlightReplaySegment> onSelectThermal;
+  final ValueChanged<FlightReplaySegment?> onSelectSegment;
 
   @override
   Widget build(BuildContext context) {
@@ -1165,23 +1248,23 @@ class _ReplaySegmentSelector extends StatelessWidget {
           selected: selectedLabel == null,
           onTap: onSelectFull,
         ),
-        if (takeoffAvailable)
+        if (takeoffSegment != null)
           _SegmentChip(
-            label: '이륙 구간',
-            selected: selectedLabel == '이륙 구간',
-            onTap: onSelectTakeoff,
+            label: takeoffSegment!.label,
+            selected: selectedLabel == takeoffSegment!.label,
+            onTap: () => onSelectSegment(takeoffSegment),
           ),
-        if (landingAvailable)
+        if (landingSegment != null)
           _SegmentChip(
-            label: '착륙 구간',
-            selected: selectedLabel == '착륙 구간',
-            onTap: onSelectLanding,
+            label: landingSegment!.label,
+            selected: selectedLabel == landingSegment!.label,
+            onTap: () => onSelectSegment(landingSegment),
           ),
         for (final segment in thermalSegments)
           _SegmentChip(
             label: segment.label,
             selected: selectedLabel == segment.label,
-            onTap: () => onSelectThermal(segment),
+            onTap: () => onSelectSegment(segment),
           ),
       ],
     );

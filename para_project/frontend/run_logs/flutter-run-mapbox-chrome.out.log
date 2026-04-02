@@ -1,0 +1,645 @@
+Launching lib\main.dart on Chrome in debug mode...
+Waiting for connection from debug service on Chrome...             32.8s
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+Debug service listening on ws://127.0.0.1:60950/hcJISB2LsD8=/ws
+A Dart VM Service on Chrome is available at: http://127.0.0.1:60950/hcJISB2LsD8=
+The Flutter DevTools debugger and profiler on Chrome is available at: http://127.0.0.1:60950/hcJISB2LsD8=/devtools/?uri=ws://127.0.0.1:60950/hcJISB2LsD8=/ws
+Starting application from main method in: org-dartlang-app:/web_entrypoint.dart.
+Found an existing <meta name="viewport"> tag. Flutter Web uses its own viewport configuration for better compatibility with Flutter. This tag will be replaced.
+[MapLibre] PMTiles support could not be loaded. TypeError: Cannot read properties of undefined (reading 'Protocol')
+══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞═════════════════════════════════════════════════════════
+The following assertion was thrown during layout:
+A RenderFlex overflowed by 6.0 pixels on the bottom.
+
+The relevant error-causing widget was:
+  Column
+  Column:file:///C:/Users/%EA%B9%80%EC%84%B8%EC%9C%A41/Documents/GitHub/Phoneix/para_project/frontend/lib/screens/live_flight_screen.dart:804:28
+
+The overflowing RenderFlex has an orientation of Axis.vertical.
+The edge of the RenderFlex that is overflowing has been marked in the rendering with a yellow and
+black striped pattern. This is usually caused by the contents being too big for the RenderFlex.
+Consider applying a flex factor (e.g. using an Expanded widget) to force the children of the
+RenderFlex to fit within the available space instead of being sized to their natural size.
+This is considered an error condition because it indicates that there is content that cannot be
+seen. If the content is legitimately bigger than the available space, consider clipping it with a
+ClipRect widget before putting it in the flex, or using a scrollable container rather than a Flex,
+like a ListView.
+The specific RenderFlex in question is: RenderFlex#d70f6 OVERFLOWING:
+  creator: Column ← Padding ← DecoratedBox ← Container ← DefaultTextStyle ← AnimatedDefaultTextStyle ←
+    _InkFeatures-[GlobalKey#505da ink renderer] ← NotificationListener<LayoutChangedNotification> ←
+    PhysicalModel ← AnimatedPhysicalModel ← Material ← ConstrainedBox ← ⋯
+  parentData: offset=Offset(13.0, 9.0) (can use size)
+  constraints: BoxConstraints(w=1657.3, h=50.0)
+  size: Size(1657.3, 50.0)
+  direction: vertical
+  mainAxisAlignment: start
+  mainAxisSize: max
+  crossAxisAlignment: center
+  verticalDirection: down
+  spacing: 0.0
+◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤◢◤
+════════════════════════════════════════════════════════════════════════════════════════════════════
+TypeError: Cannot read properties of undefined (reading 'Map')
+package:maplibre_web/src/map_state.dart 54:22                                     <fn>
+lib/_engine/engine/platform_views/content_manager.dart 158:34                     <fn>
+dart-sdk/lib/_internal/js_dev_runtime/private/identity_hash_map.dart 76:23        putIfAbsent
+lib/_engine/engine/platform_views/content_manager.dart 146:22                     renderContent
+lib/_engine/engine/platform_views/message_handler.dart 98:5                       [_createPlatformView]
+lib/_engine/engine/platform_views/message_handler.dart 137:9                      handlePlatformViewCall
+lib/_engine/engine/platform_dispatcher.dart 601:36                                [_sendPlatformMessage]
+lib/_engine/engine/platform_dispatcher.dart 368:5                                 sendPlatformMessage
+package:flutter/src/services/binding.dart 635:27                                  send
+package:flutter/src/services/platform_channel.dart 359:33                         <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 542:3                _asyncStartSync
+package:flutter/src/services/platform_channel.dart 351:14                         [_invokeMethod]
+package:flutter/src/services/platform_channel.dart 539:12                         invokeMethod
+package:flutter/src/widgets/_html_element_view_web.dart 97:41                     <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 542:3                _asyncStartSync
+package:flutter/src/widgets/_html_element_view_web.dart 95:16                     [_initialize]
+package:flutter/src/widgets/_html_element_view_web.dart 61:15                     HtmlElementViewImpl._createController
+package:flutter/src/widgets/_html_element_view_web.dart 59:3                      <fn>
+package:flutter/src/widgets/platform_view.dart 1270:47                            [_initialize]
+package:flutter/src/widgets/platform_view.dart 1251:5                             initState
+package:flutter/src/widgets/framework.dart 5950:55                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5973:11                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 7115:14                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 7115:14                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5973:11                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/layout_builder.dart 247:18                            updateChildCallback
+package:flutter/src/widgets/framework.dart 3101:11                                buildScope
+package:flutter/src/widgets/layout_builder.dart 270:5                             [_rebuildWithConstraints]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+package:flutter/src/widgets/layout_builder.dart 333:28                            layoutCallback
+package:flutter/src/rendering/object.dart 4162:33                                 <fn>
+package:flutter/src/rendering/object.dart 2887:9                                  <fn>
+package:flutter/src/rendering/object.dart 1223:7                                  [_enableMutationsToDirtySubtrees]
+package:flutter/src/rendering/object.dart 2886:7                                  invokeLayoutCallback
+package:flutter/src/rendering/object.dart 4162:5                                  runLayoutCallback
+package:flutter/src/widgets/layout_builder.dart 447:5                             performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/custom_layout.dart 180:10                           layoutChild
+package:flutter/src/material/scaffold.dart 1113:7                                 performLayout
+package:flutter/src/rendering/custom_layout.dart 246:7                            [_callPerformLayout]
+package:flutter/src/rendering/custom_layout.dart 417:5                            performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/proxy_box.dart 1549:11                              performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 3921:14                              performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/widgets/overlay.dart 1084:12                                  layoutChild
+package:flutter/src/widgets/overlay.dart 1429:9                                   performLayout
+package:flutter/src/rendering/object.dart 2616:7                                  [_layoutWithoutResize]
+package:flutter/src/rendering/object.dart 1174:17                                 flushLayout
+package:flutter/src/rendering/object.dart 1187:14                                 flushLayout
+package:flutter/src/rendering/binding.dart 629:5                                  drawFrame
+package:flutter/src/widgets/binding.dart 1304:13                                  drawFrame
+package:flutter/src/rendering/binding.dart 495:5                                  [_handlePersistentFrameCallback]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+package:flutter/src/scheduler/binding.dart 1430:7                                 [_invokeFrameCallback]
+package:flutter/src/scheduler/binding.dart 1345:9                                 handleDrawFrame
+package:flutter/src/scheduler/binding.dart 1198:5                                 [_handleDrawFrame]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+lib/_engine/engine/platform_dispatcher.dart 1689:5                                invoke
+lib/_engine/engine/platform_dispatcher.dart 265:5                                 invokeOnDrawFrame
+lib/_engine/engine/frame_service.dart 209:32                                      [_renderFrame]
+lib/_engine/engine/frame_service.dart 117:9                                       <fn>
+dart-sdk/lib/async/zone.dart 962:54                                               runUnary
+dart-sdk/lib/async/zone.dart 917:26                                               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 224:27    _callDartFunctionFast1
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 84:15     ret
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Another exception was thrown: LateInitializationError: Field '_map' has not been initialized.
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[MapLibre] PMTiles support could not be loaded. TypeError: Cannot read properties of undefined (reading 'Protocol')
+Another exception was thrown: A RenderFlex overflowed by 6.0 pixels on the bottom.
+TypeError: Cannot read properties of undefined (reading 'Map')
+package:maplibre_web/src/map_state.dart 54:22                                     <fn>
+lib/_engine/engine/platform_views/content_manager.dart 158:34                     <fn>
+dart-sdk/lib/_internal/js_dev_runtime/private/identity_hash_map.dart 76:23        putIfAbsent
+lib/_engine/engine/platform_views/content_manager.dart 146:22                     renderContent
+lib/_engine/engine/platform_views/message_handler.dart 98:5                       [_createPlatformView]
+lib/_engine/engine/platform_views/message_handler.dart 137:9                      handlePlatformViewCall
+lib/_engine/engine/platform_dispatcher.dart 601:36                                [_sendPlatformMessage]
+lib/_engine/engine/platform_dispatcher.dart 368:5                                 sendPlatformMessage
+package:flutter/src/services/binding.dart 635:27                                  send
+package:flutter/src/services/platform_channel.dart 359:33                         <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 542:3                _asyncStartSync
+package:flutter/src/services/platform_channel.dart 351:14                         [_invokeMethod]
+package:flutter/src/services/platform_channel.dart 539:12                         invokeMethod
+package:flutter/src/widgets/_html_element_view_web.dart 97:41                     <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 623:19               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 648:23               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/async_patch.dart 542:3                _asyncStartSync
+package:flutter/src/widgets/_html_element_view_web.dart 95:16                     [_initialize]
+package:flutter/src/widgets/_html_element_view_web.dart 61:15                     HtmlElementViewImpl._createController
+package:flutter/src/widgets/_html_element_view_web.dart 59:3                      <fn>
+package:flutter/src/widgets/platform_view.dart 1270:47                            [_initialize]
+package:flutter/src/widgets/platform_view.dart 1251:5                             initState
+package:flutter/src/widgets/framework.dart 5950:55                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5973:11                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 7115:14                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 7115:14                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/framework.dart 5841:16                                performRebuild
+package:flutter/src/widgets/framework.dart 5982:11                                performRebuild
+package:flutter/src/widgets/framework.dart 5529:7                                 rebuild
+package:flutter/src/widgets/framework.dart 5799:5                                 [_firstBuild]
+package:flutter/src/widgets/framework.dart 5973:11                                [_firstBuild]
+package:flutter/src/widgets/framework.dart 5793:5                                 mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 7264:36                                inflateWidget
+package:flutter/src/widgets/framework.dart 7279:32                                mount
+package:flutter/src/widgets/framework.dart 4587:19                                inflateWidget
+package:flutter/src/widgets/framework.dart 4059:18                                updateChild
+package:flutter/src/widgets/layout_builder.dart 247:18                            updateChildCallback
+package:flutter/src/widgets/framework.dart 3101:11                                buildScope
+package:flutter/src/widgets/layout_builder.dart 270:5                             [_rebuildWithConstraints]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+package:flutter/src/widgets/layout_builder.dart 333:28                            layoutCallback
+package:flutter/src/rendering/object.dart 4162:33                                 <fn>
+package:flutter/src/rendering/object.dart 2887:9                                  <fn>
+package:flutter/src/rendering/object.dart 1223:7                                  [_enableMutationsToDirtySubtrees]
+package:flutter/src/rendering/object.dart 2886:7                                  invokeLayoutCallback
+package:flutter/src/rendering/object.dart 4162:5                                  runLayoutCallback
+package:flutter/src/widgets/layout_builder.dart 447:5                             performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/custom_layout.dart 180:10                           layoutChild
+package:flutter/src/material/scaffold.dart 1113:7                                 performLayout
+package:flutter/src/rendering/custom_layout.dart 246:7                            [_callPerformLayout]
+package:flutter/src/rendering/custom_layout.dart 417:5                            performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/proxy_box.dart 1549:11                              performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 3921:14                              performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/rendering/proxy_box.dart 118:10                               <fn>
+package:flutter/src/rendering/proxy_box.dart 118:10                               performLayout
+package:flutter/src/rendering/object.dart 2768:7                                  layout
+package:flutter/src/widgets/overlay.dart 1084:12                                  layoutChild
+package:flutter/src/widgets/overlay.dart 1429:9                                   performLayout
+package:flutter/src/rendering/object.dart 2616:7                                  [_layoutWithoutResize]
+package:flutter/src/rendering/object.dart 1174:17                                 flushLayout
+package:flutter/src/rendering/object.dart 1187:14                                 flushLayout
+package:flutter/src/rendering/binding.dart 629:5                                  drawFrame
+package:flutter/src/widgets/binding.dart 1304:13                                  drawFrame
+package:flutter/src/rendering/binding.dart 495:5                                  [_handlePersistentFrameCallback]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+package:flutter/src/scheduler/binding.dart 1430:7                                 [_invokeFrameCallback]
+package:flutter/src/scheduler/binding.dart 1345:9                                 handleDrawFrame
+package:flutter/src/scheduler/binding.dart 1198:5                                 [_handleDrawFrame]
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/operations.dart 118:77  tear
+lib/_engine/engine/platform_dispatcher.dart 1689:5                                invoke
+lib/_engine/engine/platform_dispatcher.dart 265:5                                 invokeOnDrawFrame
+lib/_engine/engine/frame_service.dart 209:32                                      [_renderFrame]
+lib/_engine/engine/frame_service.dart 117:9                                       <fn>
+dart-sdk/lib/async/zone.dart 962:54                                               runUnary
+dart-sdk/lib/async/zone.dart 917:26                                               <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 224:27    _callDartFunctionFast1
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 84:15     ret
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+Another exception was thrown: LateInitializationError: Field '_map' has not been initialized.
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[38;5;12m│ 💡 [1m[3mflutter_map[0m[0m
+[38;5;12m│ 💡 Consider installing the official 'flutter_map_cancellable_tile_provider' plugin for improved[0m
+[38;5;12m│ 💡 performance on the web.[0m
+[38;5;12m│ 💡 See https://pub.dev/packages/flutter_map_cancellable_tile_provider for more info.[0m
+[38;5;12m└───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────[0m
