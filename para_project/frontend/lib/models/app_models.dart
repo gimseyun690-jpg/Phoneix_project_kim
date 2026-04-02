@@ -629,6 +629,52 @@ class FlightSessionDetail {
   final List<FlightTrackPoint> points;
 }
 
+extension FlightSessionDetailTimeline on FlightSessionDetail {
+  FlightTrackPoint? get earliestPoint {
+    if (points.isEmpty) {
+      return null;
+    }
+    FlightTrackPoint earliest = points.first;
+    for (final point in points.skip(1)) {
+      if (point.timestamp.isBefore(earliest.timestamp)) {
+        earliest = point;
+      }
+    }
+    return earliest;
+  }
+
+  FlightTrackPoint? get latestPoint {
+    if (points.isEmpty) {
+      return null;
+    }
+    FlightTrackPoint latest = points.first;
+    for (final point in points.skip(1)) {
+      if (point.timestamp.isAfter(latest.timestamp)) {
+        latest = point;
+      }
+    }
+    return latest;
+  }
+
+  DateTime get resolvedStartedAt =>
+      earliestPoint?.timestamp ?? session.startedAt;
+
+  DateTime? get resolvedEndedAt => latestPoint?.timestamp ?? session.endedAt;
+
+  Duration get resolvedDuration {
+    final end = resolvedEndedAt;
+    if (end == null) {
+      return session.duration;
+    }
+
+    final duration = end.difference(resolvedStartedAt);
+    if (duration > Duration.zero) {
+      return duration;
+    }
+    return session.duration;
+  }
+}
+
 class HomeData {
   const HomeData({
     required this.date,

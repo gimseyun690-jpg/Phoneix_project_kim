@@ -158,12 +158,25 @@ class FlightLiveMetrics {
     }
 
     final lastPoint = points.last;
-    final heading = lastPoint.heading;
-    if (heading != null && heading >= 0) {
-      return heading;
+    final recentPoints = points.reversed
+        .takeWhile(
+          (item) =>
+              lastPoint.timestamp.difference(item.timestamp).inSeconds <= 18,
+        )
+        .toList()
+        .reversed
+        .toList();
+
+    final smoothed = _resolveSmoothedHeading(recentPoints);
+    if (smoothed != null) {
+      return smoothed;
     }
 
     if (points.length < 2) {
+      final heading = lastPoint.heading;
+      if (heading != null && heading >= 0) {
+        return heading;
+      }
       return null;
     }
 
@@ -175,6 +188,56 @@ class FlightLiveMetrics {
       lastPoint.longitude,
     );
     return ((bearing % 360) + 360) % 360;
+  }
+
+  static double? _resolveSmoothedHeading(List<FlightTrackPoint> points) {
+    if (points.isEmpty) {
+      return null;
+    }
+
+    final lastTimestamp = points.last.timestamp;
+    double sinSum = 0;
+    double cosSum = 0;
+    double weightSum = 0;
+
+    for (final point in points) {
+      final heading = point.heading;
+      if (heading == null || !heading.isFinite) {
+        continue;
+      }
+
+      final speed = point.speed ?? 0;
+      final accuracy = point.accuracy;
+      if (speed < 1.6 && (accuracy == null || accuracy > 18)) {
+        continue;
+      }
+
+      final ageSeconds =
+          max(0, lastTimestamp.difference(point.timestamp).inSeconds)
+              .toDouble();
+      final recencyWeight = 1 / (1 + (ageSeconds / 4.0));
+      final speedWeight = speed <= 0
+          ? 0.55
+          : (0.45 + (speed / 12.0).clamp(0.0, 0.65)).toDouble();
+      final accuracyWeight = switch (accuracy) {
+        null => 0.92,
+        <= 10 => 1.12,
+        <= 25 => 0.96,
+        _ => 0.62,
+      };
+      final weight = recencyWeight * speedWeight * accuracyWeight;
+      final radians = heading * (pi / 180);
+      sinSum += sin(radians) * weight;
+      cosSum += cos(radians) * weight;
+      weightSum += weight;
+    }
+
+    if (weightSum <= 0) {
+      return null;
+    }
+
+    final average = atan2(sinSum / weightSum, cosSum / weightSum) * 180 / pi;
+    return ((average % 360) + 360) % 360;
   }
 
   static bool _resolveTakeoffSignal({

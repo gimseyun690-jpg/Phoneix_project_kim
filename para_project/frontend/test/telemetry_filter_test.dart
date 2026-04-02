@@ -79,6 +79,72 @@ void main() {
       expect(second.point.latitude, isNot(first.point.latitude));
       expect(second.point.longitude, isNot(first.point.longitude));
     });
+
+    test('북쪽 경계 근처 heading 변화는 자연스럽게 연결한다', () {
+      final first = filter.filter(
+        sessionId: 'session-3',
+        position: _position(
+          latitude: 35.10000,
+          longitude: 128.10000,
+          altitude: 420,
+          accuracy: 7,
+          speed: 7.2,
+          heading: 358,
+          timestamp: DateTime(2026, 4, 1, 12, 0, 0),
+        ),
+        existingPoints: const [],
+      )!;
+
+      final second = filter.filter(
+        sessionId: 'session-3',
+        position: _position(
+          latitude: 35.10055,
+          longitude: 128.10003,
+          altitude: 432,
+          accuracy: 7,
+          speed: 8.6,
+          heading: 4,
+          timestamp: DateTime(2026, 4, 1, 12, 0, 5),
+        ),
+        existingPoints: [first.point],
+      )!;
+
+      expect(second.point.heading, isNotNull);
+      final heading = second.point.heading!;
+      expect(heading <= 20 || heading >= 340, isTrue);
+    });
+
+    test('저속 상태에서는 이전 방향을 유지해 흔들림을 줄인다', () {
+      final first = filter.filter(
+        sessionId: 'session-4',
+        position: _position(
+          latitude: 35.62000,
+          longitude: 127.21000,
+          altitude: 188,
+          accuracy: 9,
+          speed: 5.5,
+          heading: 112,
+          timestamp: DateTime(2026, 4, 1, 12, 20, 0),
+        ),
+        existingPoints: const [],
+      )!;
+
+      final second = filter.filter(
+        sessionId: 'session-4',
+        position: _position(
+          latitude: 35.62003,
+          longitude: 127.21002,
+          altitude: 190,
+          accuracy: 11,
+          speed: 1.1,
+          heading: 246,
+          timestamp: DateTime(2026, 4, 1, 12, 20, 4),
+        ),
+        existingPoints: [first.point],
+      )!;
+
+      expect(second.point.heading, first.point.heading);
+    });
   });
 }
 

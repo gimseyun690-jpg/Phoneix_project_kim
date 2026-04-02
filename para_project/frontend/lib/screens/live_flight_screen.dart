@@ -652,7 +652,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
       builder: (context, constraints) {
         final availableHeight = constraints.maxHeight;
         final panelHeight = _detailsCollapsed
-            ? 90.0
+            ? 98.0
             : min(max(availableHeight * 0.30, 206.0), 264.0);
         final metricsBottom = panelHeight + 8;
         final FlightTrackingNotice? trackingNotice = null;
@@ -728,17 +728,11 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                             statusLabel: session.status.label,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        _MapOverlayActionButton(
-                          icon: Icons.refresh_rounded,
-                          tooltip: '날씨와 주변 정보 새로고침',
-                          onPressed: _handleManualRefresh,
-                        ),
                       ],
                     ),
                   ),
                   Positioned(
-                    top: 84,
+                    top: 72,
                     right: 12,
                     child: Column(
                       children: [
@@ -793,8 +787,8 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                 height: panelHeight,
                 child: Material(
                   color: Colors.transparent,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(10, 5, 10, 8),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
                     decoration: BoxDecoration(
                       color: const Color(0xF7111C24),
                       borderRadius: BorderRadius.circular(22),
@@ -819,7 +813,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
                             Expanded(
@@ -829,7 +823,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 2,
-                                    vertical: 2,
+                                    vertical: 1,
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -845,25 +839,26 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                                                     .keyboard_arrow_up_rounded
                                                 : Icons
                                                     .keyboard_arrow_down_rounded,
-                                            size: 18,
+                                            size: 16,
                                             color: Colors.white,
                                           ),
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: 3),
                                           Text(
                                             _detailsCollapsed
                                                 ? '추가 정보 보기'
                                                 : '추가 정보 접기',
                                             style: Theme.of(context)
                                                 .textTheme
-                                                .titleSmall
+                                                .bodyMedium
                                                 ?.copyWith(
                                                   color: Colors.white,
                                                   fontWeight: FontWeight.w700,
+                                                  height: 1.05,
                                                 ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 1),
                                       Text(
                                         '$currentTemperatureText · $currentWindText · $currentWindDirectionText',
                                         maxLines: 1,
@@ -874,6 +869,8 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
                                             ?.copyWith(
                                               color: Colors.white
                                                   .withValues(alpha: 0.72),
+                                              fontSize: 11,
+                                              height: 1.05,
                                             ),
                                       ),
                                     ],
@@ -1147,7 +1144,7 @@ class _LiveFlightScreenState extends State<LiveFlightScreen>
             ),
             body: LayoutBuilder(
               builder: (context, constraints) {
-                const collapsedPanelHeight = 112.0;
+                const collapsedPanelHeight = 120.0;
                 const minExpandedPanelHeight = 280.0;
                 final availableHeight = constraints.maxHeight;
                 final maxMapHeight =
@@ -1734,8 +1731,12 @@ class _FlightStatusStrip extends StatelessWidget {
             children: [
               _HeaderStat(label: '시작', value: startedAtText),
               _HeaderStat(label: '현재', value: currentTimeText),
-              _HeaderStat(label: '경과', value: elapsedText),
             ],
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _HeaderStat(label: '경과', value: elapsedText),
           ),
         ],
       ),
@@ -2256,19 +2257,19 @@ class _PanelIconButton extends StatelessWidget {
         color: destructive
             ? const Color(0x55D94B4B)
             : Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onPressed,
           borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(14),
-            child: SizedBox(
-              width: 34,
-              height: 34,
-              child: Icon(
-                icon,
-                size: 17,
-                color: destructive
-                    ? const Color(0xFFFFD9D9)
-                    : Colors.white.withValues(alpha: 0.94),
+          child: SizedBox(
+            width: 34,
+            height: 34,
+            child: Icon(
+              icon,
+              size: 17,
+              color: destructive
+                  ? const Color(0xFFFFD9D9)
+                  : Colors.white.withValues(alpha: 0.94),
             ),
           ),
         ),
@@ -2368,8 +2369,12 @@ class _CompactFlightStatusStrip extends StatelessWidget {
             children: [
               _CompactHeaderStat(label: '시작', value: startedAtText),
               _CompactHeaderStat(label: '현재', value: currentTimeText),
-              _CompactHeaderStat(label: '경과', value: elapsedText),
             ],
+          ),
+          const SizedBox(height: 5),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _CompactHeaderStat(label: '경과', value: elapsedText),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -582,18 +583,18 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                const Color(0xFF10232B).withValues(alpha: 0.20),
-                const Color(0xFF10232B).withValues(alpha: 0.06),
-                const Color(0xFF0D2028).withValues(alpha: 0.84),
+                const Color(0xFF10232B).withValues(alpha: 0.14),
+                const Color(0xFF10232B).withValues(alpha: 0.03),
+                const Color(0xFF0D2028).withValues(alpha: 0.58),
               ],
-              stops: const [0, 0.38, 1],
+              stops: const [0, 0.44, 1],
             ),
           ),
         ),
         Positioned(
           top: MediaQuery.of(context).padding.top + 82,
           left: 16,
-          right: 154,
+          right: 132,
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -614,11 +615,12 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
           child: MapViewToggle(
             value: _mapViewType,
             onChanged: _changeMapViewType,
+            compact: true,
           ),
         ),
         Positioned(
           right: 16,
-          bottom: 148,
+          bottom: 156,
           child: Column(
             children: [
               _MapActionButton(
@@ -651,93 +653,139 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
     _DetailStatusTone tone,
     Color statusColor,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E2430).withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 28,
-            offset: Offset(0, 14),
+    final theme = Theme.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 360;
+        final temperatureText = Text(
+          _formatTemperature(state.weather.temperatureCelsius),
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            height: 0.94,
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      state.detail.site.name,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+        );
+
+        final summaryBlock = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _bestSummaryText(state),
+              maxLines: isNarrow ? 3 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.90),
+                height: 1.42,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '관측 ${_formatClock(state.weather.observedAt)}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.72),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        );
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(26),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF102630).withValues(alpha: 0.54),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 24,
+                    offset: Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              state.detail.site.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleLarge?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
                               ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      state.detail.site.region,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.88),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              _StatusPill(
-                  label: _toneLabel(tone), color: statusColor, dark: true),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                _formatTemperature(state.weather.temperatureCelsius),
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _bestSummaryText(state),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        height: 1.45,
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              state.detail.site.region,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.76),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                ),
+                      const SizedBox(width: 10),
+                      _StatusPill(
+                        label: _toneLabel(tone),
+                        color: statusColor,
+                        dark: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (isNarrow) ...[
+                    temperatureText,
+                    const SizedBox(height: 10),
+                    summaryBlock,
+                  ] else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        temperatureText,
+                        const SizedBox(width: 14),
+                        Expanded(child: summaryBlock),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _HeroMetric(
+                        label: '풍속',
+                        value: _formatSpeed(state.weather.windSpeedMps),
+                      ),
+                      _HeroMetric(
+                        label: '풍향',
+                        value: _formatHeading(state.weather.windDirection),
+                      ),
+                      _HeroMetric(
+                        label: '관측',
+                        value: _formatClock(state.weather.observedAt),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _HeroMetric(
-                  label: '풍속', value: _formatSpeed(state.weather.windSpeedMps)),
-              const SizedBox(width: 10),
-              _HeroMetric(
-                  label: '풍향',
-                  value: _formatHeading(state.weather.windDirection)),
-              const SizedBox(width: 10),
-              _HeroMetric(
-                  label: '관측', value: _formatClock(state.weather.observedAt)),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -800,7 +848,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 236,
+              height: 248,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.forecast.length,
@@ -825,8 +873,9 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF6FBFD),
-                  borderRadius: BorderRadius.circular(22),
+                  color: Colors.white.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFDDE8EC)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -925,7 +974,7 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
             )
           else ...[
             SizedBox(
-              height: 280,
+              height: 292,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: state.extendedForecast.length,
@@ -951,8 +1000,9 @@ class _SiteDetailScreenState extends State<SiteDetailScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF6FBFD),
-                  borderRadius: BorderRadius.circular(22),
+                  color: Colors.white.withValues(alpha: 0.78),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFDDE8EC)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1530,8 +1580,16 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: Colors.white.withValues(alpha: 0.84),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.96)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: child,
       ),
     );
@@ -1548,8 +1606,9 @@ class _ReferenceChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEAF2F5),
+        color: Colors.white.withValues(alpha: 0.70),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xD7DDE8EC)),
       ),
       child: Text(
         label,
@@ -1587,8 +1646,9 @@ class _WeatherAlertChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: colors.background,
+        color: colors.background.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.foreground.withValues(alpha: 0.10)),
       ),
       child: Text(
         alert.label,
@@ -1615,11 +1675,14 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 150,
-      padding: const EdgeInsets.all(14),
+      width: 142,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: highlight ? const Color(0xFFE6F4F7) : const Color(0xFFF5F9FB),
-        borderRadius: BorderRadius.circular(18),
+        color: highlight
+            ? const Color(0xFFE7F4F6).withValues(alpha: 0.96)
+            : Colors.white.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCE8EE)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1657,8 +1720,9 @@ class _ForecastTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        selected ? const Color(0xFF143746) : const Color(0xFFF5F9FB);
+    final background = selected
+        ? const Color(0xFF143746)
+        : Colors.white.withValues(alpha: 0.72);
     final foreground = selected ? Colors.white : const Color(0xFF17313C);
     final muted = selected
         ? Colors.white.withValues(alpha: 0.78)
@@ -1669,12 +1733,12 @@ class _ForecastTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         width: 132,
-        padding: const EdgeInsets.fromLTRB(11, 10, 11, 9),
+        padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF58A4B0) : const Color(0xFFE0EAEE),
+            color: selected ? const Color(0xFF58A4B0) : const Color(0xFFDCE6EB),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -1691,7 +1755,7 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               _formatClock(item.time),
               maxLines: 1,
@@ -1701,13 +1765,13 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 15,
+              size: 14,
               color: foreground,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               _formatTemperature(item.temperatureCelsius),
               maxLines: 1,
@@ -1717,7 +1781,7 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               _formatSpeed(item.windSpeedMps),
               maxLines: 1,
@@ -1727,14 +1791,14 @@ class _ForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Row(
               children: [
                 Transform.rotate(
                   angle: ((item.windDirection - 90) * math.pi) / 180,
                   child: Icon(Icons.navigation_rounded, size: 16, color: muted),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 Expanded(
                   child: Text(
                     _shortHeading(item.windDirection),
@@ -1748,7 +1812,7 @@ class _ForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
@@ -1758,7 +1822,8 @@ class _ForecastTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: muted,
-                        height: 1.2,
+                        fontSize: 11,
+                        height: 1.15,
                       ),
                 ),
               ),
@@ -1785,8 +1850,9 @@ class _DailyForecastTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background =
-        selected ? const Color(0xFF143746) : const Color(0xFFF5F9FB);
+    final background = selected
+        ? const Color(0xFF143746)
+        : Colors.white.withValues(alpha: 0.72);
     final foreground = selected ? Colors.white : const Color(0xFF17313C);
     final muted = selected
         ? Colors.white.withValues(alpha: 0.78)
@@ -1798,12 +1864,12 @@ class _DailyForecastTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         width: 140,
-        padding: const EdgeInsets.fromLTRB(11, 9, 11, 9),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         decoration: BoxDecoration(
           color: background,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF58A4B0) : const Color(0xFFE0EAEE),
+            color: selected ? const Color(0xFF58A4B0) : const Color(0xFFDCE6EB),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -1820,7 +1886,7 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             Text(
               _formatForecastDate(item.date),
               maxLines: 1,
@@ -1830,13 +1896,13 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Icon(
               _weatherIconData(item.weatherCode),
-              size: 15,
+              size: 14,
               color: foreground,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               _formatDailyTemperatureRange(
                 item.minTemperatureCelsius,
@@ -1849,7 +1915,7 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               _formatSpeed(item.windSpeedMps),
               maxLines: 1,
@@ -1859,14 +1925,14 @@ class _DailyForecastTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Row(
               children: [
                 Transform.rotate(
                   angle: (((item.windDirection ?? 0) - 90) * math.pi) / 180,
                   child: Icon(Icons.navigation_rounded, size: 16, color: muted),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 5),
                 Expanded(
                   child: Text(
                     item.windDirection == null
@@ -1882,7 +1948,7 @@ class _DailyForecastTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Expanded(
               child: Align(
                 alignment: Alignment.topLeft,
@@ -1892,18 +1958,19 @@ class _DailyForecastTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: muted,
-                        height: 1.2,
+                        fontSize: 11,
+                        height: 1.15,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: badgeColor.withValues(alpha: selected ? 0.26 : 0.14),
                   borderRadius: BorderRadius.circular(999),
@@ -1913,6 +1980,7 @@ class _DailyForecastTile extends StatelessWidget {
                   style: TextStyle(
                     color: selected ? Colors.white : badgeColor,
                     fontWeight: FontWeight.w800,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1967,7 +2035,7 @@ class _InfoBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FBFD),
+        color: Colors.white.withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFFDDE8EC)),
       ),
@@ -1988,8 +2056,9 @@ class _InlineMessage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6FAFB),
+        color: Colors.white.withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFDDE8EC)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2023,22 +2092,23 @@ class _OverlayChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F2430).withValues(alpha: 0.68),
+        color: const Color(0xFF0F2430).withValues(alpha: 0.48),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 6),
+          Icon(icon, size: 15, color: Colors.white),
+          const SizedBox(width: 5),
           Text(
             text,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
+              fontSize: 12.5,
             ),
           ),
         ],
@@ -2063,15 +2133,15 @@ class _MapActionButton extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: const Color(0xFF0F2430).withValues(alpha: 0.75),
-        borderRadius: BorderRadius.circular(18),
+        color: const Color(0xFF0F2430).withValues(alpha: 0.54),
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           child: SizedBox(
-            width: 44,
-            height: 44,
-            child: Icon(icon, color: Colors.white),
+            width: 40,
+            height: 40,
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
         ),
       ),
@@ -2153,33 +2223,33 @@ class _HeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.72),
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-          ],
-        ),
+    return Container(
+      constraints: const BoxConstraints(minWidth: 88),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.68),
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+        ],
       ),
     );
   }

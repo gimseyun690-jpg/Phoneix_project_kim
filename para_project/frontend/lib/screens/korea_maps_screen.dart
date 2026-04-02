@@ -1102,9 +1102,9 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.18),
-                      Colors.transparent,
                       Colors.black.withValues(alpha: 0.14),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.12),
                     ],
                   ),
                 ),
@@ -1114,24 +1114,21 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
           Positioned(
             top: 16,
             left: 16,
-            right: 72,
+            right: 76,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _MapTitleCard(
+                _MapHeaderPanel(
                   title: _isWeatherMode ? '날씨 지도' : '비행 가능',
                   description: _isWeatherMode
                       ? '지도 지점이나 비행장을 누르면 현재 온도와 단기 예보를 바로 확인할 수 있습니다.'
                       : '주요 비행장을 기준으로 참고용 비행 상태와 현재 날씨를 함께 확인할 수 있습니다.',
-                ),
-                const SizedBox(height: 10),
-                _MapLegendCard(
                   registeredCount: widget.siteSnapshots.length,
                   importedCount: widget.importedSites.length,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 SizedBox(
-                  height: 64,
+                  height: 50,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: topChipItems.length,
@@ -1147,40 +1144,29 @@ class _KoreaMapTabState extends State<_KoreaMapTab>
             top: 16,
             child: Column(
               children: [
-                FloatingActionButton.small(
-                  heroTag: '${widget.mode.name}-refresh',
-                  onPressed: _refreshing ? null : _refreshSelection,
+                _MapControlButton(
+                  icon: _refreshing ? null : Icons.refresh_rounded,
                   tooltip: '정보 새로고침',
-                  child: _refreshing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh_rounded),
+                  onTap: _refreshing ? null : _refreshSelection,
+                  loading: _refreshing,
                 ),
-                const SizedBox(height: 10),
-                FloatingActionButton.small(
-                  heroTag: '${widget.mode.name}-location',
-                  onPressed: _focusCurrentLocation,
+                const SizedBox(height: 8),
+                _MapControlButton(
                   tooltip: _followCurrentLocation ? '현재 위치 따라가기 중' : '현재 위치 보기',
-                  child: Icon(
-                    _locating
-                        ? Icons.more_horiz_rounded
-                        : _followCurrentLocation
-                            ? Icons.gps_fixed_rounded
-                            : Icons.my_location_rounded,
-                  ),
+                  onTap: _focusCurrentLocation,
+                  icon: _locating
+                      ? Icons.more_horiz_rounded
+                      : _followCurrentLocation
+                          ? Icons.gps_fixed_rounded
+                          : Icons.my_location_rounded,
+                ),
+                const SizedBox(height: 8),
+                MapViewToggle(
+                  value: widget.mapViewType,
+                  onChanged: widget.onMapViewTypeChanged,
+                  compact: true,
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            right: 16,
-            top: 126,
-            child: MapViewToggle(
-              value: widget.mapViewType,
-              onChanged: widget.onMapViewTypeChanged,
             ),
           ),
           if (_locationError != null)
@@ -1302,27 +1288,28 @@ class _MapDetailSheet extends StatelessWidget {
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 360),
+        constraints: const BoxConstraints(maxHeight: 332),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          color: const Color(0xFFFDFEFF).withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.74)),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x22000000),
-              blurRadius: 18,
-              offset: Offset(0, 8),
+              color: Color(0x18000000),
+              blurRadius: 20,
+              offset: Offset(0, 10),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
           child: Material(
-            color: Colors.white,
+            color: const Color(0xFFFDFEFF).withValues(alpha: 0.95),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 14, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1368,7 +1355,7 @@ class _MapDetailSheet extends StatelessWidget {
                 ),
                 Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1433,7 +1420,7 @@ class _MapDetailSheet extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         Text(
                           '시간대별 예보',
                           style: Theme.of(context)
@@ -1441,9 +1428,9 @@ class _MapDetailSheet extends StatelessWidget {
                               .titleMedium
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         SizedBox(
-                          height: 140,
+                          height: 132,
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: data.forecast.length,
@@ -1455,13 +1442,13 @@ class _MapDetailSheet extends StatelessWidget {
                             },
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.all(13),
                           decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.10),
-                            borderRadius: BorderRadius.circular(18),
+                            color: color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1517,26 +1504,71 @@ class _MapDetailSheet extends StatelessWidget {
                                   ),
                         ),
                         const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: onRefresh,
-                                icon: const Icon(Icons.refresh_rounded),
-                                label: const Text('새로고침'),
-                              ),
-                            ),
-                            if (onOpenDetail != null) ...[
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: FilledButton.icon(
-                                  onPressed: onOpenDetail,
-                                  icon: const Icon(Icons.open_in_new_rounded),
-                                  label: const Text('사이트 상세'),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final narrow = constraints.maxWidth < 320;
+                            final children = <Widget>[
+                              if (!narrow)
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: onRefresh,
+                                    icon: const Icon(Icons.refresh_rounded),
+                                    label: const Text('새로고침'),
+                                  ),
+                                )
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: onRefresh,
+                                    icon: const Icon(Icons.refresh_rounded),
+                                    label: const Text('새로고침'),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ],
+                              if (onOpenDetail != null)
+                                narrow
+                                    ? SizedBox(
+                                        width: double.infinity,
+                                        child: FilledButton.icon(
+                                          onPressed: onOpenDetail,
+                                          icon: const Icon(
+                                              Icons.open_in_new_rounded),
+                                          label: const Text('사이트 상세'),
+                                        ),
+                                      )
+                                    : Expanded(
+                                        child: FilledButton.icon(
+                                          onPressed: onOpenDetail,
+                                          icon: const Icon(
+                                              Icons.open_in_new_rounded),
+                                          label: const Text('사이트 상세'),
+                                        ),
+                                      ),
+                            ];
+
+                            if (narrow) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  children.first,
+                                  if (children.length > 1) ...[
+                                    const SizedBox(height: 8),
+                                    children[1],
+                                  ],
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              children: [
+                                children.first,
+                                if (children.length > 1) ...[
+                                  const SizedBox(width: 10),
+                                  children[1],
+                                ],
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -1551,88 +1583,96 @@ class _MapDetailSheet extends StatelessWidget {
   }
 }
 
-class _MapTitleCard extends StatelessWidget {
-  const _MapTitleCard({
+class _MapHeaderPanel extends StatelessWidget {
+  const _MapHeaderPanel({
     required this.title,
     required this.description,
-  });
-
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MapLegendCard extends StatelessWidget {
-  const _MapLegendCard({
     required this.registeredCount,
     required this.importedCount,
   });
 
+  final String title;
+  final String description;
   final int registeredCount;
   final int importedCount;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withValues(alpha: 0.84),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Color(0x10000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _LegendPill(
-            color: const Color(0xFF2A9D8F),
-            text: '주요 비행장 $registeredCount곳',
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF143746).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.layers_outlined,
+                  size: 18,
+                  color: Color(0xFF143746),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF143746),
+                          ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF546973),
+                            height: 1.35,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          _LegendPill(
-            color: const Color(0xFF0F8B8D),
-            text: '추가 이륙장 $importedCount곳',
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _LegendPill(
+                color: const Color(0xFF2A9D8F),
+                text: '주요 비행장 $registeredCount곳',
+              ),
+              _LegendPill(
+                color: const Color(0xFF0F8B8D),
+                text: '추가 이륙장 $importedCount곳',
+              ),
+            ],
           ),
         ],
       ),
@@ -1652,9 +1692,9 @@ class _LegendPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -1669,12 +1709,17 @@ class _LegendPill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: const Color(0xFF17324D),
-                  fontWeight: FontWeight.w700,
-                ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 124),
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF17324D),
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ),
         ],
       ),
@@ -1701,24 +1746,26 @@ class _MapChoiceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final foreground = selected ? Colors.white : const Color(0xFF17324D);
     return Material(
-      color: selected ? accentColor : Colors.white,
-      borderRadius: BorderRadius.circular(18),
+      color: selected ? accentColor : Colors.white.withValues(alpha: 0.86),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          width: 162,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          width: 140,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: selected ? accentColor : const Color(0xFFE3EAEE),
+              color: selected
+                  ? accentColor
+                  : const Color(0xFFD8E3E9).withValues(alpha: 0.92),
             ),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
+                color: Color(0x0E000000),
+                blurRadius: 8,
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -1745,7 +1792,7 @@ class _MapChoiceChip extends StatelessWidget {
                   color: selected
                       ? Colors.white.withValues(alpha: 0.92)
                       : const Color(0xFF607080),
-                  fontSize: 12,
+                  fontSize: 11.5,
                 ),
               ),
             ],
@@ -1770,10 +1817,11 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
+        color: accentColor.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1809,11 +1857,12 @@ class _ForecastChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 118,
-      padding: const EdgeInsets.fromLTRB(11, 10, 11, 9),
+      width: 110,
+      padding: const EdgeInsets.fromLTRB(10, 9, 10, 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F8FA),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withValues(alpha: 0.80),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE4ECEF)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.max,
@@ -1861,6 +1910,51 @@ class _ForecastChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MapControlButton extends StatelessWidget {
+  const _MapControlButton({
+    required this.tooltip,
+    required this.onTap,
+    this.icon,
+    this.loading = false,
+  });
+
+  final IconData? icon;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: const Color(0xFF143746).withValues(alpha: 0.64),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Center(
+              child: loading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Icon(icon, color: Colors.white, size: 20),
+            ),
+          ),
+        ),
       ),
     );
   }

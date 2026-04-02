@@ -100,6 +100,44 @@ void main() {
       expect(replay.indexForProgress(1.0), 2);
     });
 
+    test('진행률 기반 보간 프레임으로 재생 위치를 부드럽게 계산한다', () {
+      final replay = FlightReplayData.fromPoints([
+        _point(
+          index: 0,
+          latitude: 37.0000,
+          longitude: 127.0000,
+          altitude: 100,
+          timestamp: DateTime(2026, 4, 1, 10, 0, 0),
+          speed: 2.0,
+        ),
+        _point(
+          index: 1,
+          latitude: 37.0010,
+          longitude: 127.0010,
+          altitude: 140,
+          timestamp: DateTime(2026, 4, 1, 10, 1, 0),
+          speed: 4.0,
+        ),
+        _point(
+          index: 2,
+          latitude: 37.0020,
+          longitude: 127.0020,
+          altitude: 180,
+          timestamp: DateTime(2026, 4, 1, 10, 2, 0),
+          speed: 6.0,
+        ),
+      ]);
+
+      final sampled = replay.sampleFrameForProgress(0.25);
+
+      expect(sampled.timestamp, DateTime(2026, 4, 1, 10, 0, 30));
+      expect(sampled.latitude, closeTo(37.0005, 0.0001));
+      expect(sampled.longitude, closeTo(127.0005, 0.0001));
+      expect(sampled.altitudeMeters, closeTo(120, 0.5));
+      expect(sampled.speedMps, closeTo(3.0, 0.1));
+      expect(sampled.progress, closeTo(0.25, 0.01));
+    });
+
     test('지속 상승 구간을 써멀 추정으로 묶는다', () {
       final replay = FlightReplayData.fromPoints([
         _point(
@@ -159,6 +197,137 @@ void main() {
         replay.thermalSegments.first.duration,
         greaterThan(const Duration(seconds: 20)),
       );
+    });
+
+    test('시간이 뒤섞인 포인트도 실제 시작과 종료 시각 기준으로 정렬한다', () {
+      final replay = FlightReplayData.fromPoints([
+        _point(
+          index: 0,
+          latitude: 37.2004,
+          longitude: 127.2004,
+          altitude: 210,
+          timestamp: DateTime(2026, 4, 1, 9, 4, 0),
+          speed: 5.1,
+        ),
+        _point(
+          index: 1,
+          latitude: 37.2000,
+          longitude: 127.2000,
+          altitude: 120,
+          timestamp: DateTime(2026, 4, 1, 9, 0, 0),
+          speed: 0.2,
+        ),
+        _point(
+          index: 2,
+          latitude: 37.2002,
+          longitude: 127.2002,
+          altitude: 165,
+          timestamp: DateTime(2026, 4, 1, 9, 2, 0),
+          speed: 4.2,
+        ),
+      ]);
+
+      expect(replay.frames.first.timestamp, DateTime(2026, 4, 1, 9, 0, 0));
+      expect(replay.frames.last.timestamp, DateTime(2026, 4, 1, 9, 4, 0));
+      expect(replay.totalDuration, const Duration(minutes: 4));
+      expect(replay.indexForElapsed(const Duration(minutes: 2)), 1);
+    });
+
+    test('지형 샘플 기준으로 전역 고도 편차를 보정한다', () {
+      final replay = FlightReplayData.fromPoints([
+        _point(
+          index: 0,
+          latitude: 36.1000,
+          longitude: 128.1000,
+          altitude: 520,
+          timestamp: DateTime(2026, 4, 1, 11, 0, 0),
+          speed: 0.3,
+        ),
+        _point(
+          index: 1,
+          latitude: 36.1004,
+          longitude: 128.1004,
+          altitude: 610,
+          timestamp: DateTime(2026, 4, 1, 11, 0, 40),
+          speed: 5.2,
+        ),
+        _point(
+          index: 2,
+          latitude: 36.1008,
+          longitude: 128.1008,
+          altitude: 760,
+          timestamp: DateTime(2026, 4, 1, 11, 1, 20),
+          speed: 6.1,
+        ),
+        _point(
+          index: 3,
+          latitude: 36.1012,
+          longitude: 128.1011,
+          altitude: 540,
+          timestamp: DateTime(2026, 4, 1, 11, 2, 0),
+          speed: 1.8,
+        ),
+      ]);
+
+      final alignment = FlightReplayTerrainAlignment.fromTerrainSamples(
+        replay,
+        const [480, 575, 705, 500],
+      );
+
+      expect(alignment.hasTerrainSamples, isTrue);
+      expect(alignment.biasApplied, isTrue);
+      expect(alignment.altitudeBiasMeters, closeTo(35, 20));
+      expect(alignment.correctedClearanceAt(0), lessThan(35));
+      expect(alignment.correctedClearanceAt(2), greaterThan(25));
+    });
+
+    test('지형 샘플이 일부 비어도 보간해서 정렬 데이터를 만든다', () {
+      final replay = FlightReplayData.fromPoints([
+        _point(
+          index: 0,
+          latitude: 37.3100,
+          longitude: 127.4100,
+          altitude: 410,
+          timestamp: DateTime(2026, 4, 1, 12, 0, 0),
+          speed: 0.2,
+        ),
+        _point(
+          index: 1,
+          latitude: 37.3103,
+          longitude: 127.4104,
+          altitude: 455,
+          timestamp: DateTime(2026, 4, 1, 12, 0, 30),
+          speed: 4.4,
+        ),
+        _point(
+          index: 2,
+          latitude: 37.3108,
+          longitude: 127.4109,
+          altitude: 520,
+          timestamp: DateTime(2026, 4, 1, 12, 1, 0),
+          speed: 5.3,
+        ),
+        _point(
+          index: 3,
+          latitude: 37.3112,
+          longitude: 127.4115,
+          altitude: 470,
+          timestamp: DateTime(2026, 4, 1, 12, 1, 30),
+          speed: 2.7,
+        ),
+      ]);
+
+      final alignment = FlightReplayTerrainAlignment.fromTerrainSamples(
+        replay,
+        const [390, null, 450, null],
+      );
+
+      expect(alignment.frames, hasLength(replay.frames.length));
+      expect(alignment.hasTerrainSamples, isTrue);
+      expect(alignment.frameAt(1).isInterpolated, isTrue);
+      expect(alignment.frameAt(1).terrainElevationMeters, greaterThan(390));
+      expect(alignment.frameAt(1).terrainElevationMeters, lessThan(450));
+      expect(alignment.visualClearanceAt(2), greaterThan(1));
     });
   });
 }

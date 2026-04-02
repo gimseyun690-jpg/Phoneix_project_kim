@@ -9,6 +9,7 @@ enum FlightReplayCameraMode {
   follow,
   topDown,
   perspective,
+  sideView,
 }
 
 enum FlightReplaySegmentType {
@@ -22,7 +23,8 @@ extension FlightReplayCameraModeLabel on FlightReplayCameraMode {
         FlightReplayCameraMode.overview => '전체 보기',
         FlightReplayCameraMode.follow => '따라가기',
         FlightReplayCameraMode.topDown => '상단 보기',
-        FlightReplayCameraMode.perspective => '3D 시점',
+        FlightReplayCameraMode.perspective => '사선 3D 보기',
+        FlightReplayCameraMode.sideView => '측면 3D 보기',
       };
 }
 
@@ -56,6 +58,315 @@ class FlightReplayFrame {
   final double verticalSpeedMps;
   final double cumulativeDistanceMeters;
   final double progress;
+}
+
+class FlightReplayTerrainFrame {
+  const FlightReplayTerrainFrame({
+    required this.terrainElevationMeters,
+    required this.rawClearanceMeters,
+    required this.correctedClearanceMeters,
+    required this.visualClearanceMeters,
+    required this.isInterpolated,
+  });
+
+  final double terrainElevationMeters;
+  final double rawClearanceMeters;
+  final double correctedClearanceMeters;
+  final double visualClearanceMeters;
+  final bool isInterpolated;
+}
+
+class FlightReplayTerrainAlignment {
+  const FlightReplayTerrainAlignment({
+    required this.frames,
+    required this.altitudeBiasMeters,
+    required this.sampledFrameCount,
+    required this.referenceFrameCount,
+    required this.minVisualClearanceMeters,
+    required this.maxVisualClearanceMeters,
+    required this.biasApplied,
+  });
+
+  static const empty = FlightReplayTerrainAlignment(
+    frames: [],
+    altitudeBiasMeters: 0,
+    sampledFrameCount: 0,
+    referenceFrameCount: 0,
+    minVisualClearanceMeters: 0,
+    maxVisualClearanceMeters: 0,
+    biasApplied: false,
+  );
+
+  final List<FlightReplayTerrainFrame> frames;
+  final double altitudeBiasMeters;
+  final int sampledFrameCount;
+  final int referenceFrameCount;
+  final double minVisualClearanceMeters;
+  final double maxVisualClearanceMeters;
+  final bool biasApplied;
+
+  bool get hasTerrainSamples => frames.isNotEmpty && sampledFrameCount > 0;
+  bool get hasUsableSamples =>
+      hasTerrainSamples &&
+      sampledFrameCount >= min(18, max(4, (frames.length * 0.03).round()));
+
+  FlightReplayTerrainFrame frameAt(int index) {
+    if (frames.isEmpty) {
+      throw StateError('지형 정렬 데이터가 없습니다.');
+    }
+    return frames[index.clamp(0, frames.length - 1)];
+  }
+
+  double visualClearanceAt(int index) => frameAt(index).visualClearanceMeters;
+
+  double correctedClearanceAt(int index) =>
+      frameAt(index).correctedClearanceMeters;
+
+  factory FlightReplayTerrainAlignment.fromTerrainSamples(
+    FlightReplayData replayData,
+    List<double?> terrainElevationsMeters,
+  ) {
+    if (replayData.frames.isEmpty || terrainElevationsMeters.isEmpty) {
+      return empty;
+    }
+
+    final source = List<double?>.filled(replayData.frames.length, null);
+    final sampledFlags = List<bool>.filled(replayData.frames.length, false);
+
+    for (var index = 0;
+        index < min(replayData.frames.length, terrainElevationsMeters.length);
+        index++) {
+      final terrain = terrainElevationsMeters[index];
+      if (terrain == null || !terrain.isFinite) {
+        continue;
+      }
+      if (terrain < -500 || terrain > 12000) {
+        continue;
+      }
+      source[index] = terrain;
+      sampledFlags[index] = true;
+    }
+
+    final sampledFrameCount = sampledFlags.where((flag) => flag).length;
+    if (sampledFrameCount == 0) {
+      return empty;
+    }
+
+    final filledTerrain = _fillTerrainSeries(source);
+    if (filledTerrain.every((value) => value == null)) {
+      return empty;
+    }
+
+    final smoothedTerrain = _smoothSeries(
+      filledTerrain.map((value) => value ?? 0).toList(growable: false),
+    );
+    final rawClearances = List<double>.generate(
+      replayData.frames.length,
+      (index) =>
+          replayData.frames[index].displayAltitudeMeters -
+          smoothedTerrain[index],
+      growable: false,
+    );
+
+    final biasEstimate = _estimateAltitudeBias(replayData, rawClearances);
+    final correctedClearances = rawClearances
+        .map((value) => max(0.0, value - biasEstimate.biasMeters))
+        .toList(growable: false);
+    final smoothedClearances = _smoothSeries(correctedClearances);
+
+    final frames = List<FlightReplayTerrainFrame>.generate(
+      replayData.frames.length,
+      (index) {
+        final corrected = correctedClearances[index];
+        final visual = max(1.4, smoothedClearances[index]);
+        return FlightReplayTerrainFrame(
+          terrainElevationMeters: smoothedTerrain[index],
+          rawClearanceMeters: rawClearances[index],
+          correctedClearanceMeters: corrected,
+          visualClearanceMeters: visual,
+          isInterpolated: !sampledFlags[index],
+        );
+      },
+      growable: false,
+    );
+
+    var minClearance = frames.first.visualClearanceMeters;
+    var maxClearance = frames.first.visualClearanceMeters;
+    for (final frame in frames.skip(1)) {
+      minClearance = min(minClearance, frame.visualClearanceMeters);
+      maxClearance = max(maxClearance, frame.visualClearanceMeters);
+    }
+
+    return FlightReplayTerrainAlignment(
+      frames: frames,
+      altitudeBiasMeters: biasEstimate.biasMeters,
+      sampledFrameCount: sampledFrameCount,
+      referenceFrameCount: biasEstimate.referenceCount,
+      minVisualClearanceMeters: minClearance,
+      maxVisualClearanceMeters: maxClearance,
+      biasApplied: biasEstimate.applied,
+    );
+  }
+
+  static List<double?> _fillTerrainSeries(List<double?> values) {
+    if (values.isEmpty) {
+      return const [];
+    }
+
+    final knownIndices = <int>[];
+    for (var index = 0; index < values.length; index++) {
+      if (values[index] != null) {
+        knownIndices.add(index);
+      }
+    }
+    if (knownIndices.isEmpty) {
+      return List<double?>.filled(values.length, null);
+    }
+    if (knownIndices.length == 1) {
+      return List<double?>.filled(values.length, values[knownIndices.first]);
+    }
+
+    final result = List<double?>.filled(values.length, null);
+
+    final firstKnown = knownIndices.first;
+    for (var index = 0; index <= firstKnown; index++) {
+      result[index] = values[firstKnown];
+    }
+
+    for (var cursor = 0; cursor < knownIndices.length - 1; cursor++) {
+      final startIndex = knownIndices[cursor];
+      final endIndex = knownIndices[cursor + 1];
+      final startValue = values[startIndex]!;
+      final endValue = values[endIndex]!;
+      result[startIndex] = startValue;
+      for (var index = startIndex + 1; index < endIndex; index++) {
+        final t = (index - startIndex) / (endIndex - startIndex);
+        result[index] = startValue + ((endValue - startValue) * t);
+      }
+      result[endIndex] = endValue;
+    }
+
+    final lastKnown = knownIndices.last;
+    for (var index = lastKnown; index < result.length; index++) {
+      result[index] = values[lastKnown];
+    }
+
+    return result;
+  }
+
+  static List<double> _smoothSeries(List<double> values) {
+    if (values.length < 3) {
+      return values;
+    }
+
+    return List<double>.generate(values.length, (index) {
+      var weightedSum = 0.0;
+      var weightSum = 0.0;
+      for (var offset = -2; offset <= 2; offset++) {
+        final neighborIndex = index + offset;
+        if (neighborIndex < 0 || neighborIndex >= values.length) {
+          continue;
+        }
+        final distance = offset.abs();
+        final weight = switch (distance) {
+          0 => 0.36,
+          1 => 0.22,
+          _ => 0.10,
+        };
+        weightedSum += values[neighborIndex] * weight;
+        weightSum += weight;
+      }
+      if (weightSum == 0) {
+        return values[index];
+      }
+      return weightedSum / weightSum;
+    }, growable: false);
+  }
+
+  static _TerrainBiasEstimate _estimateAltitudeBias(
+    FlightReplayData replayData,
+    List<double> rawClearances,
+  ) {
+    if (rawClearances.isEmpty) {
+      return const _TerrainBiasEstimate(
+        biasMeters: 0,
+        referenceCount: 0,
+        applied: false,
+      );
+    }
+
+    final candidates = <double>[];
+    final windowRadius = max(3, (rawClearances.length * 0.05).round());
+
+    void addWindowMin(int start, int end) {
+      final safeStart = start.clamp(0, rawClearances.length - 1);
+      final safeEnd = end.clamp(safeStart, rawClearances.length - 1);
+      double? minimum;
+      for (var index = safeStart; index <= safeEnd; index++) {
+        final value = rawClearances[index];
+        if (!value.isFinite) {
+          continue;
+        }
+        minimum = minimum == null ? value : min(minimum, value);
+      }
+      if (minimum != null) {
+        candidates.add(minimum);
+      }
+    }
+
+    addWindowMin(0, max(replayData.takeoffFrameIndex + windowRadius, 0));
+    addWindowMin(
+      max(0, replayData.landingFrameIndex - windowRadius),
+      rawClearances.length - 1,
+    );
+
+    final sorted = List<double>.from(rawClearances)..sort();
+    final percentileIndex =
+        ((sorted.length - 1) * 0.08).round().clamp(0, sorted.length - 1);
+    candidates.add(sorted[percentileIndex]);
+
+    final reliable = candidates
+        .where((value) => value.isFinite && value.abs() <= 150)
+        .toList(growable: false);
+    if (reliable.isEmpty) {
+      return const _TerrainBiasEstimate(
+        biasMeters: 0,
+        referenceCount: 0,
+        applied: false,
+      );
+    }
+
+    final median = _median(reliable);
+    return _TerrainBiasEstimate(
+      biasMeters: median,
+      referenceCount: reliable.length,
+      applied: median.abs() >= 2.0,
+    );
+  }
+
+  static double _median(List<double> values) {
+    if (values.isEmpty) {
+      return 0;
+    }
+    final sorted = List<double>.from(values)..sort();
+    final middle = sorted.length ~/ 2;
+    if (sorted.length.isOdd) {
+      return sorted[middle];
+    }
+    return (sorted[middle - 1] + sorted[middle]) / 2;
+  }
+}
+
+class _TerrainBiasEstimate {
+  const _TerrainBiasEstimate({
+    required this.biasMeters,
+    required this.referenceCount,
+    required this.applied,
+  });
+
+  final double biasMeters;
+  final int referenceCount;
+  final bool applied;
 }
 
 class FlightReplaySegment {
@@ -111,8 +422,80 @@ class FlightReplayData {
     if (frames.isEmpty) {
       throw StateError('리플레이 프레임이 없습니다.');
     }
-    final clamped = index.clamp(0, frames.length - 1);
-    return frames[clamped];
+    return frames[index.clamp(0, frames.length - 1)];
+  }
+
+  Duration durationForRange({
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      return Duration.zero;
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    return frameAt(safeEnd).elapsedDuration -
+        frameAt(safeStart).elapsedDuration;
+  }
+
+  double progressForIndex(
+    int index, {
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      return 0;
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    final safeIndex = index.clamp(safeStart, safeEnd);
+    final rangeDuration = durationForRange(
+      startIndex: safeStart,
+      endIndex: safeEnd,
+    );
+    if (rangeDuration == Duration.zero) {
+      return 0;
+    }
+
+    final elapsedFromStart =
+        frameAt(safeIndex).elapsedDuration - frameAt(safeStart).elapsedDuration;
+    return (elapsedFromStart.inMilliseconds / rangeDuration.inMilliseconds)
+        .clamp(0.0, 1.0);
+  }
+
+  Duration elapsedForProgress(
+    double progress, {
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      return Duration.zero;
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    final clampedProgress = progress.clamp(0.0, 1.0);
+    final startElapsed = frameAt(safeStart).elapsedDuration;
+    final rangeDuration = durationForRange(
+      startIndex: safeStart,
+      endIndex: safeEnd,
+    );
+    return startElapsed +
+        Duration(
+          milliseconds:
+              (rangeDuration.inMilliseconds * clampedProgress).round(),
+        );
   }
 
   int futureFrameIndex(
@@ -124,12 +507,12 @@ class FlightReplayData {
       return 0;
     }
 
-    final safeIndex = index.clamp(0, frames.length - 1).toInt();
+    final safeIndex = index.clamp(0, frames.length - 1);
     final current = frameAt(safeIndex);
     final speedFactor = (current.speedMps / 4.0).round().clamp(
           0,
           max(0, maximumLeadFrames - minimumLeadFrames),
-        ).toInt();
+        ) as int;
     return min(
       frames.length - 1,
       safeIndex + minimumLeadFrames + speedFactor,
@@ -162,34 +545,239 @@ class FlightReplayData {
     if (frames.isEmpty) {
       return 0;
     }
-
-    var bestIndex = 0;
-    var bestDelta =
-        frames.first.timestamp.difference(timestamp).abs().inMilliseconds;
-    for (var index = 1; index < frames.length; index++) {
-      final delta =
-          frames[index].timestamp.difference(timestamp).abs().inMilliseconds;
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        bestIndex = index;
-      }
-    }
-    return bestIndex;
+    return _nearestIndexForEpochMilliseconds(timestamp.millisecondsSinceEpoch);
   }
 
-  int indexForProgress(double progress) {
+  int indexForElapsed(Duration elapsed) {
     if (frames.isEmpty) {
       return 0;
     }
-    final clamped = progress.clamp(0.0, 1.0);
-    return (clamped * (frames.length - 1)).round();
+    final clampedElapsed = Duration(
+      milliseconds: elapsed.inMilliseconds.clamp(
+        0,
+        max(0, totalDuration.inMilliseconds),
+      ),
+    );
+    final startTimestamp = frames.first.timestamp.millisecondsSinceEpoch;
+    return _nearestIndexForEpochMilliseconds(
+      startTimestamp + clampedElapsed.inMilliseconds,
+    );
+  }
+
+  int indexForProgress(
+    double progress, {
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      return 0;
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    final targetElapsed = elapsedForProgress(
+      progress,
+      startIndex: safeStart,
+      endIndex: safeEnd,
+    );
+    return indexForElapsed(targetElapsed).clamp(safeStart, safeEnd);
+  }
+
+  FlightReplayFrame sampleFrameForProgress(
+    double progress, {
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      throw StateError('리플레이 프레임이 없습니다.');
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    if (safeStart == safeEnd) {
+      return frameAt(safeStart);
+    }
+
+    final targetElapsed = elapsedForProgress(
+      progress,
+      startIndex: safeStart,
+      endIndex: safeEnd,
+    );
+    return sampleFrameForElapsed(
+      targetElapsed,
+      startIndex: safeStart,
+      endIndex: safeEnd,
+    );
+  }
+
+  FlightReplayFrame sampleFrameForElapsed(
+    Duration elapsed, {
+    int startIndex = 0,
+    int? endIndex,
+  }) {
+    if (frames.isEmpty) {
+      throw StateError('리플레이 프레임이 없습니다.');
+    }
+
+    final safeStart = startIndex.clamp(0, frames.length - 1);
+    final safeEnd = (endIndex ?? frames.length - 1).clamp(
+      safeStart,
+      frames.length - 1,
+    );
+    if (safeStart == safeEnd) {
+      return frameAt(safeStart);
+    }
+
+    final startElapsed = frameAt(safeStart).elapsedDuration;
+    final endElapsed = frameAt(safeEnd).elapsedDuration;
+    final clampedElapsed = Duration(
+      milliseconds: elapsed.inMilliseconds.clamp(
+        startElapsed.inMilliseconds,
+        endElapsed.inMilliseconds,
+      ),
+    );
+    final targetEpochMs = frames.first.timestamp.millisecondsSinceEpoch +
+        clampedElapsed.inMilliseconds;
+
+    final upperIndex = _firstIndexAtOrAfterEpochMilliseconds(targetEpochMs)
+        .clamp(safeStart, safeEnd);
+    if (upperIndex <= safeStart) {
+      return frameAt(safeStart);
+    }
+    if (upperIndex >= safeEnd &&
+        frameAt(safeEnd).timestamp.millisecondsSinceEpoch <= targetEpochMs) {
+      return frameAt(safeEnd);
+    }
+
+    final lowerIndex = max(safeStart, upperIndex - 1);
+    final lowerFrame = frameAt(lowerIndex);
+    final upperFrame = frameAt(upperIndex);
+    final lowerEpochMs = lowerFrame.timestamp.millisecondsSinceEpoch;
+    final upperEpochMs = upperFrame.timestamp.millisecondsSinceEpoch;
+    if (upperEpochMs <= lowerEpochMs) {
+      return upperFrame;
+    }
+
+    final t =
+        ((targetEpochMs - lowerEpochMs) / (upperEpochMs - lowerEpochMs)).clamp(
+      0.0,
+      1.0,
+    );
+    return _interpolateFrame(lowerFrame, upperFrame, t);
+  }
+
+  int _nearestIndexForEpochMilliseconds(int targetEpochMs) {
+    var low = 0;
+    var high = frames.length - 1;
+
+    while (low < high) {
+      final middle = (low + high) ~/ 2;
+      final middleEpochMs = frames[middle].timestamp.millisecondsSinceEpoch;
+      if (middleEpochMs < targetEpochMs) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+
+    final candidate = low;
+    final previous = max(0, candidate - 1);
+    final candidateDiff =
+        (frames[candidate].timestamp.millisecondsSinceEpoch - targetEpochMs)
+            .abs();
+    final previousDiff =
+        (frames[previous].timestamp.millisecondsSinceEpoch - targetEpochMs)
+            .abs();
+    return previousDiff <= candidateDiff ? previous : candidate;
+  }
+
+  int _firstIndexAtOrAfterEpochMilliseconds(int targetEpochMs) {
+    var low = 0;
+    var high = frames.length - 1;
+
+    while (low < high) {
+      final middle = (low + high) ~/ 2;
+      final middleEpochMs = frames[middle].timestamp.millisecondsSinceEpoch;
+      if (middleEpochMs < targetEpochMs) {
+        low = middle + 1;
+      } else {
+        high = middle;
+      }
+    }
+
+    return low;
+  }
+
+  FlightReplayFrame _interpolateFrame(
+    FlightReplayFrame from,
+    FlightReplayFrame to,
+    double t,
+  ) {
+    if (t <= 0) {
+      return from;
+    }
+    if (t >= 1) {
+      return to;
+    }
+
+    final timestampDeltaMs = to.timestamp.millisecondsSinceEpoch -
+        from.timestamp.millisecondsSinceEpoch;
+    final elapsedDeltaMs =
+        to.elapsedDuration.inMilliseconds - from.elapsedDuration.inMilliseconds;
+
+    return FlightReplayFrame(
+      sourceIndex: t < 0.5 ? from.sourceIndex : to.sourceIndex,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(
+        from.timestamp.millisecondsSinceEpoch + (timestampDeltaMs * t).round(),
+      ),
+      elapsedDuration: Duration(
+        milliseconds:
+            from.elapsedDuration.inMilliseconds + (elapsedDeltaMs * t).round(),
+      ),
+      latitude: _lerpDouble(from.latitude, to.latitude, t),
+      longitude: _lerpDouble(from.longitude, to.longitude, t),
+      altitudeMeters: _lerpDouble(from.altitudeMeters, to.altitudeMeters, t),
+      displayAltitudeMeters:
+          _lerpDouble(from.displayAltitudeMeters, to.displayAltitudeMeters, t),
+      altitudeFromStartMeters: _lerpDouble(
+        from.altitudeFromStartMeters,
+        to.altitudeFromStartMeters,
+        t,
+      ),
+      speedMps: _lerpDouble(from.speedMps, to.speedMps, t),
+      heading: _interpolateBearing(from.heading, to.heading, t),
+      verticalSpeedMps:
+          _lerpDouble(from.verticalSpeedMps, to.verticalSpeedMps, t),
+      cumulativeDistanceMeters: _lerpDouble(
+        from.cumulativeDistanceMeters,
+        to.cumulativeDistanceMeters,
+        t,
+      ),
+      progress: _lerpDouble(from.progress, to.progress, t).clamp(0.0, 1.0),
+    );
+  }
+
+  double _interpolateBearing(double from, double to, double t) {
+    final delta = ((to - from + 540) % 360) - 180;
+    return _normalizeBearing(from + (delta * t));
+  }
+
+  double _lerpDouble(double from, double to, double t) {
+    return from + ((to - from) * t);
   }
 
   factory FlightReplayData.fromPoints(
     List<FlightTrackPoint> points, {
-    int maxFrames = 220,
+    int maxFrames = 1400,
   }) {
-    if (points.isEmpty) {
+    final normalizedPoints = _normalizePoints(points);
+    if (normalizedPoints.isEmpty) {
       return const FlightReplayData(
         frames: [],
         highestFrameIndex: 0,
@@ -203,38 +791,31 @@ class FlightReplayData {
       );
     }
 
-    final cumulativeDistances = _buildCumulativeDistances(points);
+    final cumulativeDistances = _buildCumulativeDistances(normalizedPoints);
     final selectedIndices = _buildSelectedIndices(
-      points: points,
+      points: normalizedPoints,
       maxFrames: maxFrames,
     );
-    final totalDuration =
-        points.last.timestamp.difference(points.first.timestamp);
+    final totalDuration = normalizedPoints.last.timestamp
+        .difference(normalizedPoints.first.timestamp);
     final totalDistanceMeters =
         cumulativeDistances.isEmpty ? 0.0 : cumulativeDistances.last;
     final displayAltitudes = selectedIndices
-        .map((sourceIndex) => _smoothAltitude(points, sourceIndex))
+        .map((sourceIndex) => _smoothAltitude(normalizedPoints, sourceIndex))
         .toList(growable: false);
     final startDisplayAltitude = displayAltitudes.isEmpty
-        ? points.first.altitude
+        ? normalizedPoints.first.altitude
         : displayAltitudes.first;
 
     final frames = <FlightReplayFrame>[];
+    final safeDurationMs = max(1, totalDuration.inMilliseconds);
     for (var selectedIndex = 0;
         selectedIndex < selectedIndices.length;
         selectedIndex++) {
       final sourceIndex = selectedIndices[selectedIndex];
-      final point = points[sourceIndex];
-      final safeDurationSeconds = max(1, totalDuration.inSeconds);
-      final elapsedSeconds = max(
-        0,
-        point.timestamp.difference(points.first.timestamp).inSeconds,
-      );
-      final progress = totalDuration == Duration.zero
-          ? (selectedIndices.length == 1
-              ? 0.0
-              : frames.length / (selectedIndices.length - 1))
-          : elapsedSeconds / safeDurationSeconds;
+      final point = normalizedPoints[sourceIndex];
+      final elapsedDuration =
+          point.timestamp.difference(normalizedPoints.first.timestamp);
       final displayAltitude = displayAltitudes[selectedIndex];
       final verticalSpeed = selectedIndex == 0
           ? 0.0
@@ -242,7 +823,8 @@ class FlightReplayData {
               previousAltitude: displayAltitudes[selectedIndex - 1],
               currentAltitude: displayAltitude,
               previousTimestamp:
-                  points[selectedIndices[selectedIndex - 1]].timestamp,
+                  normalizedPoints[selectedIndices[selectedIndex - 1]]
+                      .timestamp,
               currentTimestamp: point.timestamp,
             );
 
@@ -250,17 +832,22 @@ class FlightReplayData {
         FlightReplayFrame(
           sourceIndex: sourceIndex,
           timestamp: point.timestamp,
-          elapsedDuration: point.timestamp.difference(points.first.timestamp),
+          elapsedDuration: elapsedDuration,
           latitude: point.latitude,
           longitude: point.longitude,
           altitudeMeters: point.altitude,
           displayAltitudeMeters: displayAltitude,
           altitudeFromStartMeters: displayAltitude - startDisplayAltitude,
-          speedMps: _resolveSpeed(points, sourceIndex),
-          heading: _resolveHeading(points, sourceIndex),
+          speedMps: _resolveSpeed(normalizedPoints, sourceIndex),
+          heading: _resolveHeading(normalizedPoints, sourceIndex),
           verticalSpeedMps: verticalSpeed,
           cumulativeDistanceMeters: cumulativeDistances[sourceIndex],
-          progress: progress.clamp(0.0, 1.0),
+          progress: totalDuration == Duration.zero
+              ? (selectedIndices.length == 1
+                  ? 0.0
+                  : selectedIndex / (selectedIndices.length - 1))
+              : (elapsedDuration.inMilliseconds / safeDurationMs)
+                  .clamp(0.0, 1.0),
         ),
       );
     }
@@ -301,6 +888,44 @@ class FlightReplayData {
     );
   }
 
+  static List<FlightTrackPoint> _normalizePoints(
+      List<FlightTrackPoint> points) {
+    if (points.isEmpty) {
+      return const [];
+    }
+
+    final ordered = List<FlightTrackPoint>.from(points)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final normalized = <FlightTrackPoint>[];
+    for (final point in ordered) {
+      if (normalized.isEmpty) {
+        normalized.add(point);
+        continue;
+      }
+
+      final previous = normalized.last;
+      final sameTimestamp =
+          point.timestamp.isAtSameMomentAs(previous.timestamp);
+      final samePosition =
+          (point.latitude - previous.latitude).abs() < 0.000001 &&
+              (point.longitude - previous.longitude).abs() < 0.000001;
+      final sameAltitude = (point.altitude - previous.altitude).abs() < 0.5;
+
+      if (sameTimestamp && samePosition && sameAltitude) {
+        normalized[normalized.length - 1] = point;
+        continue;
+      }
+
+      if (sameTimestamp) {
+        normalized[normalized.length - 1] = point;
+        continue;
+      }
+
+      normalized.add(point);
+    }
+    return normalized;
+  }
+
   static List<double> _buildCumulativeDistances(List<FlightTrackPoint> points) {
     if (points.isEmpty) {
       return const [];
@@ -328,10 +953,39 @@ class FlightReplayData {
       return List<int>.generate(points.length, (index) => index);
     }
 
+    final totalDuration =
+        points.last.timestamp.difference(points.first.timestamp);
+    final totalMs = max(1, totalDuration.inMilliseconds);
     final selected = <int>{0, points.length - 1, _highestAltitudeIndex(points)};
-    final step = (points.length - 1) / (maxFrames - 1);
-    for (var index = 0; index < maxFrames; index++) {
-      selected.add((index * step).round());
+    var cursor = 0;
+
+    for (var sampleIndex = 0; sampleIndex < maxFrames; sampleIndex++) {
+      final targetMs = (sampleIndex * totalMs / (maxFrames - 1)).round();
+      while (cursor < points.length - 1) {
+        final cursorMs = points[cursor]
+            .timestamp
+            .difference(points.first.timestamp)
+            .inMilliseconds;
+        if (cursorMs >= targetMs) {
+          break;
+        }
+        cursor += 1;
+      }
+
+      final previousIndex = max(0, cursor - 1);
+      final previousMs = points[previousIndex]
+          .timestamp
+          .difference(points.first.timestamp)
+          .inMilliseconds;
+      final currentMs = points[cursor]
+          .timestamp
+          .difference(points.first.timestamp)
+          .inMilliseconds;
+      final chosen =
+          (targetMs - previousMs).abs() <= (currentMs - targetMs).abs()
+              ? previousIndex
+              : cursor;
+      selected.add(chosen);
     }
 
     final result = selected.toList()..sort();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:maplibre/maplibre.dart';
 
 import '../core/map_view_type.dart';
 import '../models/app_models.dart';
+import 'animated_heading_icon.dart';
 import 'flight_map_view.dart';
 
 class FlightMap3DView extends StatefulWidget {
@@ -20,6 +22,7 @@ class FlightMap3DView extends StatefulWidget {
     this.siteLatitude,
     this.siteLongitude,
     this.siteLabel,
+    this.onFollowDisabled,
   });
 
   final List<FlightTrackPoint> points;
@@ -30,6 +33,7 @@ class FlightMap3DView extends StatefulWidget {
   final double? siteLatitude;
   final double? siteLongitude;
   final String? siteLabel;
+  final VoidCallback? onFollowDisabled;
 
   @override
   State<FlightMap3DView> createState() => FlightMap3DViewState();
@@ -43,6 +47,7 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
   final ll.Distance _distance = const ll.Distance();
   MapController? _controller;
   FlightTrackPoint? _lastAnimatedPoint;
+  double? _lastAnimatedBearing;
 
   @override
   void didUpdateWidget(covariant FlightMap3DView oldWidget) {
@@ -96,7 +101,11 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
     }
 
     final camera = controller.camera ?? controller.getCamera();
-    final targetBearing = _normalizeBearing(point.heading ?? camera.bearing);
+    final targetBearing = _resolveAnimatedBearing(
+      point: point,
+      previousPoint: previousPoint,
+      fallbackBearing: camera.bearing,
+    );
 
     try {
       await controller.animateCamera(
@@ -109,6 +118,7 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
         webMaxDuration: const Duration(milliseconds: 550),
       );
       _lastAnimatedPoint = point;
+      _lastAnimatedBearing = targetBearing;
     } catch (_) {
       // 지도가 아직 완전히 준비되지 않았으면 다음 위치 갱신에서 다시 시도합니다.
     }
@@ -139,7 +149,9 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
         currentPoint != null ? _toGeographicPoint(currentPoint) : sitePoint;
     final effectiveCenter =
         initialCenter ?? const Geographic(lon: 127.7669, lat: 35.9078);
-    final initialBearing = _normalizeBearing(currentPoint?.heading ?? 0);
+    final initialBearing = _normalizeBearing(
+      _lastAnimatedBearing ?? currentPoint?.heading ?? 0,
+    );
 
     return SizedBox(
       height: widget.height,
@@ -152,6 +164,7 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
             MapLibreMap(
               onMapCreated: (controller) {
                 _controller = controller;
+                _lastAnimatedBearing = initialBearing;
                 if (widget.followLocation && currentPoint != null) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     recenter(force: true);
@@ -207,7 +220,7 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
                         size: const Size(60, 60),
                         rotate: true,
                         child: _CurrentPointBadge(
-                          heading: currentPoint.heading,
+                          heading: _lastAnimatedBearing ?? currentPoint.heading,
                         ),
                       ),
                   ],
@@ -253,6 +266,109 @@ class FlightMap3DViewState extends State<FlightMap3DView> {
 
   double _normalizeBearing(double value) {
     return ((value % 360) + 360) % 360;
+  }
+
+  double _resolveAnimatedBearing({
+    required FlightTrackPoint point,
+    required FlightTrackPoint? previousPoint,
+    required double fallbackBearing,
+  }) {
+    final currentBearing =
+        _normalizeBearing(_lastAnimatedBearing ?? fallbackBearing);
+    final accuracy = point.accuracy ?? previousPoint?.accuracy ?? 12;
+    final speed = (point.speed ?? 0).clamp(0, 35).toDouble();
+
+    double? movedMeters;
+    double? derivedBearing;
+    if (previousPoint != null) {
+      movedMeters = _distance.as(
+        ll.LengthUnit.Meter,
+        ll.LatLng(previousPoint.latitude, previousPoint.longitude),
+        ll.LatLng(point.latitude, point.longitude),
+      );
+      if (movedMeters >= max(4.5, accuracy * 0.35)) {
+        derivedBearing = _bearingBetween(previousPoint, point);
+      }
+    }
+
+    if ((movedMeters ?? 0) < max(4.5, accuracy * 0.35) && speed < 3.0) {
+      return currentBearing;
+    }
+
+    final candidate = _resolveBearingCandidate(
+      sensorBearing: point.heading,
+      derivedBearing: derivedBearing,
+      accuracyMeters: accuracy,
+      speedMps: speed,
+    );
+    if (candidate == null) {
+      return currentBearing;
+    }
+
+    final delta = _bearingDelta(currentBearing, candidate);
+    final absoluteDelta = delta.abs();
+    if (absoluteDelta < 2.5) {
+      return currentBearing;
+    }
+    if (absoluteDelta > 90 && speed < 5.5) {
+      return currentBearing;
+    }
+
+    double smoothing = switch (speed) {
+      >= 12 => 0.62,
+      >= 8 => 0.48,
+      >= 4.5 => 0.36,
+      _ => 0.26,
+    };
+    if (accuracy > 18) {
+      smoothing -= 0.08;
+    }
+    if (absoluteDelta > 70 && speed < 7) {
+      smoothing = min(smoothing, 0.24);
+    }
+
+    return _normalizeBearing(
+      currentBearing + (delta * smoothing.clamp(0.18, 0.62)),
+    );
+  }
+
+  double? _resolveBearingCandidate({
+    required double? sensorBearing,
+    required double? derivedBearing,
+    required double accuracyMeters,
+    required double speedMps,
+  }) {
+    final normalizedSensor =
+        sensorBearing == null ? null : _normalizeBearing(sensorBearing);
+    final normalizedDerived =
+        derivedBearing == null ? null : _normalizeBearing(derivedBearing);
+
+    if (normalizedSensor != null && normalizedDerived != null) {
+      final gap = _bearingDelta(normalizedDerived, normalizedSensor).abs();
+      if (gap <= 16) {
+        return _normalizeBearing(
+          normalizedDerived +
+              (_bearingDelta(normalizedDerived, normalizedSensor) * 0.45),
+        );
+      }
+      if (gap <= 42 && speedMps >= 8 && accuracyMeters <= 18) {
+        return _normalizeBearing(
+          normalizedDerived +
+              (_bearingDelta(normalizedDerived, normalizedSensor) * 0.28),
+        );
+      }
+      return normalizedDerived;
+    }
+
+    return normalizedDerived ?? normalizedSensor;
+  }
+
+  double _bearingBetween(FlightTrackPoint from, FlightTrackPoint to) {
+    final dx = to.longitude - from.longitude;
+    final dy = to.latitude - from.latitude;
+    final radians = atan2(dx, dy);
+    final degrees = radians * 180 / pi;
+    return _normalizeBearing(degrees);
   }
 
   double _bearingDelta(double? previous, double? current) {
@@ -309,7 +425,6 @@ class _CurrentPointBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final angle = ((heading ?? 0) % 360) * degree2Radian;
     return Center(
       child: Container(
         width: 50,
@@ -335,13 +450,11 @@ class _CurrentPointBadge extends StatelessWidget {
                 ),
               ],
             ),
-            child: Transform.rotate(
-              angle: angle,
-              child: const Icon(
-                Icons.navigation_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
+            child: AnimatedHeadingIcon(
+              headingDegrees: heading,
+              icon: Icons.navigation_rounded,
+              iconColor: Colors.white,
+              iconSize: 18,
             ),
           ),
         ),

@@ -98,7 +98,9 @@ class FlightAnalysisSummary {
 
   factory FlightAnalysisSummary.fromDetail(FlightSessionDetail detail) {
     final session = detail.session;
-    final points = detail.points;
+    final points = List<FlightTrackPoint>.from(detail.points)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    final resolvedDuration = detail.resolvedDuration;
     if (points.isEmpty) {
       return FlightAnalysisSummary(
         averageAltitudeMeters: session.maxAltitudeMeters,
@@ -121,7 +123,7 @@ class FlightAnalysisSummary {
           ),
         ],
         overview:
-            '${formatDuration(session.duration)} 동안 비행을 기록했습니다. 경로 샘플이 적어 상세 분석은 참고용으로만 표시됩니다.',
+            '${formatDuration(resolvedDuration)} 동안 비행을 기록했습니다. 경로 샘플이 적어 상세 분석은 참고용으로만 표시됩니다.',
         qualityNote: '기록 샘플이 적어 고도와 속도 흐름 해석은 제한적입니다.',
       );
     }
@@ -208,6 +210,7 @@ class FlightAnalysisSummary {
     );
     final overview = _buildOverview(
       session: session,
+      resolvedDuration: resolvedDuration,
       highestPoint: highestPoint,
       totalAltitudeGainMeters: totalGain,
       maxClimbRateMps: maxClimbRate,
@@ -320,12 +323,13 @@ class FlightAnalysisSummary {
 
   static String _buildOverview({
     required FlightSession session,
+    required Duration resolvedDuration,
     required FlightTrackPoint highestPoint,
     required double totalAltitudeGainMeters,
     required double maxClimbRateMps,
   }) {
     final buffer = StringBuffer(
-      '${formatDuration(session.duration)} 동안 ${formatDistanceMeters(session.totalDistanceMeters)} 이동했고 최고 ${formatAltitudeMeters(session.maxAltitudeMeters)}까지 도달했습니다.',
+      '${formatDuration(resolvedDuration)} 동안 ${formatDistanceMeters(session.totalDistanceMeters)} 이동했고 최고 ${formatAltitudeMeters(highestPoint.altitude)}까지 도달했습니다.',
     );
 
     if (totalAltitudeGainMeters >= 120) {

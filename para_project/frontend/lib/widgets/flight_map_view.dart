@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../core/map_view_type.dart';
 import '../models/app_models.dart';
+import 'animated_heading_icon.dart';
 
 class FlightMapView extends StatelessWidget {
   const FlightMapView({
@@ -26,6 +27,9 @@ class FlightMapView extends StatelessWidget {
     this.highlightLatitude,
     this.highlightLongitude,
     this.highlightLabel,
+    this.revealUntilIndex,
+    this.revealLatitude,
+    this.revealLongitude,
     this.onPositionChanged,
   });
 
@@ -45,6 +49,9 @@ class FlightMapView extends StatelessWidget {
   final double? highlightLatitude;
   final double? highlightLongitude;
   final String? highlightLabel;
+  final int? revealUntilIndex;
+  final double? revealLatitude;
+  final double? revealLongitude;
   final void Function(MapCamera camera, bool hasGesture)? onPositionChanged;
 
   @override
@@ -59,6 +66,9 @@ class FlightMapView extends StatelessWidget {
         highlightLatitude == null || highlightLongitude == null
             ? null
             : LatLng(highlightLatitude!, highlightLongitude!);
+    final revealPoint = revealLatitude == null || revealLongitude == null
+        ? null
+        : LatLng(revealLatitude!, revealLongitude!);
 
     if (routePoints.isEmpty && sitePoint == null && highlightPoint == null) {
       return Container(
@@ -81,6 +91,21 @@ class FlightMapView extends StatelessWidget {
     final zoom = _estimateZoom(allPoints);
     final lastPoint = routePoints.isEmpty ? null : routePoints.last;
     final firstPoint = routePoints.isEmpty ? null : routePoints.first;
+    final safeRevealIndex = routePoints.isEmpty || revealUntilIndex == null
+        ? null
+        : revealUntilIndex!.clamp(0, routePoints.length - 1);
+    List<LatLng>? revealedRoutePoints;
+    if (safeRevealIndex != null) {
+      revealedRoutePoints = routePoints.take(safeRevealIndex + 1).toList();
+      if (revealPoint != null &&
+          (revealedRoutePoints.isEmpty ||
+              !_isSamePoint(revealedRoutePoints.last, revealPoint))) {
+        revealedRoutePoints.add(revealPoint);
+      }
+      if (revealedRoutePoints.length < 2) {
+        revealedRoutePoints = null;
+      }
+    }
     final markers = <Marker>[
       if (sitePoint != null && !_containsPoint(routePoints, sitePoint))
         Marker(
@@ -150,11 +175,34 @@ class FlightMapView extends StatelessWidget {
                 if (routePoints.length >= 2)
                   PolylineLayer(
                     polylines: [
-                      Polyline(
-                        points: routePoints,
-                        strokeWidth: 4,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      if (revealedRoutePoints != null) ...[
+                        Polyline(
+                          points: routePoints,
+                          strokeWidth: 3.4,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.20),
+                        ),
+                        Polyline(
+                          points: revealedRoutePoints,
+                          strokeWidth: 7.0,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.18),
+                        ),
+                        Polyline(
+                          points: revealedRoutePoints,
+                          strokeWidth: 4.6,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ] else
+                        Polyline(
+                          points: routePoints,
+                          strokeWidth: 4,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                     ],
                   ),
                 if (markers.isNotEmpty) MarkerLayer(markers: markers),
@@ -246,7 +294,6 @@ class _CurrentPositionMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final angle = ((heading ?? 0) % 360) * (math.pi / 180);
     return Container(
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
@@ -259,12 +306,12 @@ class _CurrentPositionMarker extends StatelessWidget {
           color: Theme.of(context).colorScheme.primary,
           border: Border.all(color: Colors.white, width: 2),
         ),
-        child: Transform.rotate(
-          angle: angle,
-          child: const Icon(
-            Icons.navigation_rounded,
-            color: Colors.white,
-            size: 18,
+        child: Center(
+          child: AnimatedHeadingIcon(
+            headingDegrees: heading,
+            icon: Icons.navigation_rounded,
+            iconColor: Colors.white,
+            iconSize: 18,
           ),
         ),
       ),

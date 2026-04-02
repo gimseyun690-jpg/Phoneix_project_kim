@@ -103,6 +103,8 @@ class TelemetryFilter {
       longitude: longitude,
       sensorHeading: position.heading >= 0 ? position.heading : null,
       speed: filteredSpeed,
+      accuracyMeters: accuracy,
+      movedMeters: rawDistance,
     );
 
     final altitude = _normalizeAltitude(
@@ -145,37 +147,106 @@ class TelemetryFilter {
     required double longitude,
     required double? sensorHeading,
     required double speed,
+    required double? accuracyMeters,
+    required double movedMeters,
   }) {
-    if (speed < 2.5) {
+    if (speed < 2.2) {
       return previous.heading;
     }
 
-    var heading = sensorHeading;
-    heading ??= Geolocator.bearingBetween(
-      previous.latitude,
-      previous.longitude,
-      latitude,
-      longitude,
+    final effectiveAccuracy = accuracyMeters ?? previous.accuracy ?? 12;
+    final movementThreshold = max(4.5, effectiveAccuracy * 0.40);
+    if (movedMeters < movementThreshold && speed < 3.4) {
+      return previous.heading;
+    }
+
+    final derivedHeading = movedMeters >= movementThreshold
+        ? Geolocator.bearingBetween(
+            previous.latitude,
+            previous.longitude,
+            latitude,
+            longitude,
+          )
+        : null;
+    final candidate = _resolveHeadingCandidate(
+      sensorHeading: sensorHeading,
+      derivedHeading: derivedHeading,
+      speed: speed,
+      accuracyMeters: effectiveAccuracy,
     );
-
-    if (!heading.isFinite) {
+    if (candidate == null) {
       return previous.heading;
     }
 
-    final normalized = _wrapHeading(heading);
     final previousHeading = previous.heading;
     if (previousHeading == null) {
-      return normalized;
+      return candidate;
     }
 
-    final delta = _headingDelta(previousHeading, normalized).abs();
-    if (delta < 15) {
-      return _wrapHeading((previousHeading * 0.45) + (normalized * 0.55));
-    }
-    if (delta > 110 && speed < 4.2) {
+    final delta = _headingDelta(previousHeading, candidate).abs();
+    if (delta < 2.5) {
       return previousHeading;
     }
-    return normalized;
+    if (delta < 12) {
+      return _blendHeading(previousHeading, candidate, 0.30);
+    }
+    if (delta > 110 && speed < 4.8) {
+      return previousHeading;
+    }
+    if (effectiveAccuracy > 28 && delta > 28 && speed < 8) {
+      return previousHeading;
+    }
+
+    double smoothing = switch (speed) {
+      >= 12 => 0.60,
+      >= 8 => 0.46,
+      >= 4.5 => 0.34,
+      _ => 0.24,
+    };
+    if (effectiveAccuracy > 18) {
+      smoothing -= 0.08;
+    }
+    if (delta > 70 && speed < 7) {
+      smoothing = min(smoothing, 0.24);
+    }
+
+    return _blendHeading(
+      previousHeading,
+      candidate,
+      smoothing.clamp(0.18, 0.60),
+    );
+  }
+
+  double? _resolveHeadingCandidate({
+    required double? sensorHeading,
+    required double? derivedHeading,
+    required double speed,
+    required double accuracyMeters,
+  }) {
+    final normalizedSensor = sensorHeading == null || !sensorHeading.isFinite
+        ? null
+        : _wrapHeading(sensorHeading);
+    final normalizedDerived = derivedHeading == null || !derivedHeading.isFinite
+        ? null
+        : _wrapHeading(derivedHeading);
+
+    if (normalizedSensor != null && normalizedDerived != null) {
+      final gap = _headingDelta(normalizedDerived, normalizedSensor).abs();
+      if (gap <= 14) {
+        return _blendHeading(normalizedDerived, normalizedSensor, 0.42);
+      }
+      if (gap <= 40 && speed >= 9 && accuracyMeters <= 18) {
+        return _blendHeading(normalizedDerived, normalizedSensor, 0.26);
+      }
+      return normalizedDerived;
+    }
+
+    return normalizedDerived ?? normalizedSensor;
+  }
+
+  double _blendHeading(double from, double to, double factor) {
+    final delta = _headingDelta(from, to);
+    return _wrapHeading(from + (delta * factor));
   }
 
   double _normalizeAltitude({

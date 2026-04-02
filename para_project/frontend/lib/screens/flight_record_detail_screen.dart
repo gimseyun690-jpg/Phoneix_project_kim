@@ -219,6 +219,9 @@ class _FlightRecordDetailScreenState extends State<FlightRecordDetailScreen> {
       siteId: session.siteId,
       siteName: session.siteName,
     );
+    final resolvedStartedAt = detail.resolvedStartedAt;
+    final resolvedEndedAt = detail.resolvedEndedAt;
+    final resolvedDuration = detail.resolvedDuration;
     final selectedMoment = _selectedMomentFor(summary);
     final startPoint = summary.startPoint;
     final endPoint = summary.endPoint;
@@ -236,7 +239,13 @@ class _FlightRecordDetailScreenState extends State<FlightRecordDetailScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          _AnalysisHeroCard(session: session, summary: summary),
+          _AnalysisHeroCard(
+            session: session,
+            summary: summary,
+            startedAt: resolvedStartedAt,
+            endedAt: resolvedEndedAt,
+            duration: resolvedDuration,
+          ),
           const SizedBox(height: 16),
           const _SectionTitle(
             title: '핵심 성과 요약',
@@ -249,9 +258,9 @@ class _FlightRecordDetailScreenState extends State<FlightRecordDetailScreen> {
             children: [
               _AnalysisMetricCard.hero(
                 label: '총 비행 시간',
-                value: formatDuration(session.duration),
+                value: formatDuration(resolvedDuration),
                 hint:
-                    '${formatTime(session.startedAt)} ~ ${session.endedAt == null ? '기록 중' : formatTime(session.endedAt!)}',
+                    '${formatTime(resolvedStartedAt)} ~ ${resolvedEndedAt == null ? '기록 중' : formatTime(resolvedEndedAt)}',
               ),
               _AnalysisMetricCard.hero(
                 label: '최고 고도',
@@ -801,10 +810,16 @@ class _AnalysisHeroCard extends StatelessWidget {
   const _AnalysisHeroCard({
     required this.session,
     required this.summary,
+    required this.startedAt,
+    required this.endedAt,
+    required this.duration,
   });
 
   final FlightSession session;
   final FlightAnalysisSummary summary;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final Duration duration;
 
   @override
   Widget build(BuildContext context) {
@@ -840,7 +855,7 @@ class _AnalysisHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${formatDate(session.startedAt)} · ${session.displayRegion}',
+            '${formatDate(startedAt)} · ${session.displayRegion}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.82),
                 ),
@@ -850,15 +865,12 @@ class _AnalysisHeroCard extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _HeroInfo(label: '시작', value: formatTime(session.startedAt)),
+              _HeroInfo(label: '시작', value: formatTime(startedAt)),
               _HeroInfo(
                 label: '종료',
-                value: session.endedAt == null
-                    ? '기록 중'
-                    : formatTime(session.endedAt!),
+                value: endedAt == null ? '기록 중' : formatTime(endedAt!),
               ),
-              _HeroInfo(
-                  label: '총 비행 시간', value: formatDuration(session.duration)),
+              _HeroInfo(label: '총 비행 시간', value: formatDuration(duration)),
               _HeroInfo(
                 label: '분석 품질',
                 value: summary.averageAccuracyMeters == null
